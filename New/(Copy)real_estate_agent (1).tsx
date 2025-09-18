@@ -18,139 +18,13 @@ const RealEstateAgent = () => {
   const [emailTemplates, setEmailTemplates] = useState([]);
   const [activeTab, setActiveTab] = useState('upload');
 
-  const extractFromWisconsinContract = (text) => {
-    const extractedData = {};
-    
-    // Wisconsin real estate contract specific patterns
-    const patterns = {
-      // Property address from line 4-8
-      propertyAddress: /known as\s+([^\n]+(?:\n[^,\n]*)*),?\s*in the\s+(?:city\s+)?of\s+([^,\n]+),\s*County/i,
-      
-      // Purchase price from line 9-10
-      salePrice: /purchase price is\s+([\w\s]+)\s+Dollars\s+\(\$\s*([\d,]+(?:\.\d{2})?)\)/i,
-      
-      // Buyer name from line 3
-      buyerName: /The Buyer,\s+([^,\n]+),?/i,
-      
-      // Closing date from line 47-48
-      closingDate: /This transaction is to be closed on\s+([^\n]+)/i,
-      
-      // Binding acceptance deadline from line 39-40
-      acceptanceDate: /copy of the accepted Offer is delivered to Buyer\s+on or before\s+([^\n.]+)/i,
-      
-      // Inspection contingency days from line 205-206
-      inspectionPeriod: /unless Buyer.*?within\s+(\d+)\s+days.*?after acceptance.*?delivers.*inspection report/i,
-      
-      // Financing deadline from line 249-250
-      financingDeadline: /written.*?commitment.*?within\s+(\d+)\s+days after acceptance/i,
-      
-      // Appraisal contingency from line 311-312
-      appraisalPeriod: /unless Buyer.*?within\s+(\d+)\s+days after acceptance.*?delivers.*appraisal report/i,
-      
-      // Earnest money from line 55
-      earnestMoney: /EARNEST MONEY of \$\s*([\d,]+(?:\.\d{2})?)/i
-    };
-
-    // Extract data using patterns
-    Object.keys(patterns).forEach(key => {
-      const match = text.match(patterns[key]);
-      if (match) {
-        switch(key) {
-          case 'propertyAddress':
-            if (match[1] && match[2]) {
-              extractedData[key] = `${match[1].trim()}, ${match[2].trim()}`;
-            }
-            break;
-          case 'salePrice':
-            extractedData[key] = match[2] ? match[2].replace(/,/g, '') : (match[1] ? match[1].replace(/,/g, '') : '');
-            break;
-          default:
-            extractedData[key] = match[1] ? match[1].trim() : '';
-        }
-      }
-    });
-
-    return extractedData;
-  };
-
-  const extractTextFromPDF = async (file) => {
-    try {
-      if (file.type === 'application/pdf') {
-        // For demo purposes with the provided document, we'll extract the known data
-        // In production, this would use a PDF parsing library like pdf-parse
-        const knownContractData = {
-          propertyAddress: "1560 S 26th ST, Milwaukee, WI 53204",
-          salePrice: "250000",
-          buyerName: "Declan Roddy",
-          sellerName: "SUV Properties LLC",
-          acceptanceDate: "2025-09-09",
-          closingDate: "2025-10-10",
-          inspectionPeriod: "15",
-          appraisalPeriod: "20",
-          financingDeadline: "25",
-          earnestMoney: "1000"
-        };
-        return knownContractData;
-      }
-      return null;
-    } catch (error) {
-      console.error('Error extracting PDF:', error);
-      return null;
-    }
-  };
-
-  const parseContractText = (text) => {
-    // For text files or when we have actual contract text
-    return extractFromWisconsinContract(text);
-  };
-
   const handleFileUpload = async (event) => {
     const file = event.target.files[0];
     if (file) {
       setUploadedOffer(file);
-      
-      try {
-        let extractedData = null;
-        
-        if (file.type === 'application/pdf') {
-          // For PDF files
-          extractedData = await extractTextFromPDF(file);
-        } else if (file.type.includes('text') || file.name.endsWith('.txt')) {
-          // For text files
-          const text = await file.text();
-          extractedData = parseContractText(text);
-        } else {
-          // For document files, show extraction from the provided Wisconsin contract
-          extractedData = {
-            propertyAddress: "1560 S 26th ST, Milwaukee, WI 53204",
-            salePrice: "250000",
-            buyerName: "Declan Roddy",
-            sellerName: "SUV Properties LLC",
-            acceptanceDate: "2025-09-09",
-            closingDate: "2025-10-10",
-            inspectionPeriod: "15",
-            appraisalPeriod: "20",
-            financingDeadline: "25"
-          };
-        }
-
-        // Populate the form with extracted data
-        if (extractedData) {
-          setOfferDetails(prevDetails => ({
-            ...prevDetails,
-            ...extractedData
-          }));
-          
-          // Show success message
-          alert(`Contract data extracted successfully!\n\nExtracted Information:\n• Property: ${extractedData.propertyAddress || 'Not found'}\n• Sale Price: ${extractedData.salePrice || 'Not found'}\n• Buyer: ${extractedData.buyerName || 'Not found'}\n• Seller: ${extractedData.sellerName || 'Not found'}\n• Closing Date: ${extractedData.closingDate || 'Not found'}`);
-          
-          // Automatically move to details tab to show populated fields
-          setActiveTab('details');
-        }
-      } catch (error) {
-        console.error('Error processing file:', error);
-        alert('Error processing file. Please check the file format and try again.');
-      }
+      // In a real app, you'd parse the PDF/document here
+      // For demo, we'll show a form to input details
+      setActiveTab('details');
     }
   };
 
@@ -162,13 +36,13 @@ const RealEstateAgent = () => {
 
     // Standard real estate timeline calculations
     const inspectionDeadline = new Date(acceptanceDate);
-    inspectionDeadline.setDate(acceptanceDate.getDate() + Number(offerDetails.inspectionPeriod || 10));
+    inspectionDeadline.setDate(acceptanceDate.getDate() + parseInt(offerDetails.inspectionPeriod || 10));
 
     const appraisalDeadline = new Date(acceptanceDate);
-    appraisalDeadline.setDate(acceptanceDate.getDate() + Number(offerDetails.appraisalPeriod || 21));
+    appraisalDeadline.setDate(acceptanceDate.getDate() + parseInt(offerDetails.appraisalPeriod || 21));
 
     const financingDeadline = new Date(acceptanceDate);
-    financingDeadline.setDate(acceptanceDate.getDate() + Number(offerDetails.financingDeadline || 30));
+    financingDeadline.setDate(acceptanceDate.getDate() + parseInt(offerDetails.financingDeadline || 30));
 
     const titleSearch = new Date(acceptanceDate);
     titleSearch.setDate(acceptanceDate.getDate() + 7);
@@ -310,8 +184,8 @@ Remember: If no inspection objections are submitted by the deadline, you waive y
 If you have questions about the inspection process or need guidance on evaluating inspection results, consider contacting these HUD-approved housing counseling agencies:
 
 • ACTS Housing - (414) 937-9295
-• UCC - (414) 384-3100
-• HIR - (414) 264-2622
+• UCC (United Community Center) - (414) 384-3100
+• HIR (Homeownership Initiative & Resources) - (414) 264-2622
 • Green Path Financial Wellness - (877) 337-3399
 
 Please let us know if you need any assistance.
@@ -332,7 +206,7 @@ Please contact your lender immediately if you haven't received final approval. I
   Mortgage and credit counseling
 • ACTS Housing - (414) 937-9295
   Homeownership financing assistance
-• HIR - (414) 264-2622
+• HIR (Homeownership Initiative & Resources) - (414) 264-2622
   First-time buyer loan programs
 
 Time-sensitive action items:
@@ -440,8 +314,6 @@ Your Real Estate Team`
                     type="text"
                     value={offerDetails.propertyAddress}
                     onChange={(e) => setOfferDetails({...offerDetails, propertyAddress: e.target.value})}
-                    placeholder="1560 S 26th ST, Milwaukee, WI"
-                    title="Property address"
                     className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
@@ -451,8 +323,6 @@ Your Real Estate Team`
                     type="text"
                     value={offerDetails.salePrice}
                     onChange={(e) => setOfferDetails({...offerDetails, salePrice: e.target.value})}
-                    placeholder="$250,000"
-                    title="Sale price"
                     className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
@@ -462,8 +332,6 @@ Your Real Estate Team`
                     type="text"
                     value={offerDetails.buyerName}
                     onChange={(e) => setOfferDetails({...offerDetails, buyerName: e.target.value})}
-                    placeholder="Buyer name"
-                    title="Buyer name"
                     className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
@@ -473,8 +341,6 @@ Your Real Estate Team`
                     type="text"
                     value={offerDetails.sellerName}
                     onChange={(e) => setOfferDetails({...offerDetails, sellerName: e.target.value})}
-                    placeholder="Seller or company"
-                    title="Seller name"
                     className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
@@ -484,7 +350,6 @@ Your Real Estate Team`
                     type="date"
                     value={offerDetails.acceptanceDate}
                     onChange={(e) => setOfferDetails({...offerDetails, acceptanceDate: e.target.value})}
-                    title="Acceptance date"
                     className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
@@ -494,7 +359,6 @@ Your Real Estate Team`
                     type="date"
                     value={offerDetails.closingDate}
                     onChange={(e) => setOfferDetails({...offerDetails, closingDate: e.target.value})}
-                    title="Closing date"
                     className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
@@ -504,9 +368,8 @@ Your Real Estate Team`
                     type="number"
                     value={offerDetails.inspectionPeriod}
                     onChange={(e) => setOfferDetails({...offerDetails, inspectionPeriod: e.target.value})}
-                    title="Inspection period (days)"
-                    placeholder="10"
                     className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="10"
                   />
                 </div>
                 <div>
@@ -515,9 +378,8 @@ Your Real Estate Team`
                     type="number"
                     value={offerDetails.appraisalPeriod}
                     onChange={(e) => setOfferDetails({...offerDetails, appraisalPeriod: e.target.value})}
-                    title="Appraisal period (days)"
-                    placeholder="21"
                     className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="21"
                   />
                 </div>
                 <div className="md:col-span-2">
@@ -526,9 +388,8 @@ Your Real Estate Team`
                     type="number"
                     value={offerDetails.financingDeadline}
                     onChange={(e) => setOfferDetails({...offerDetails, financingDeadline: e.target.value})}
-                    title="Financing deadline (days)"
-                    placeholder="30"
                     className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="30"
                   />
                 </div>
               </div>
