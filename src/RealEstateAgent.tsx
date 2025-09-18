@@ -9,13 +9,12 @@ import { Calendar, Mail, Upload, FileText, Clock } from 'lucide-react';
  * - Improved hero/banner and CTA formatting
  */
 
-const HouseLogo = ({ className = 'w-10 h-10' }: { className?: string }) => (
-  <svg className={className} viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
-    <rect width="64" height="64" rx="12" fill="#14B8A6" />
-    <path d="M16 34 L32 20 L48 34" stroke="#FFFFFF" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-    <rect x="22" y="34" width="20" height="12" rx="2" fill="#FFFFFF" />
-    <rect x="28" y="38" width="6" height="8" rx="1" fill="#14B8A6" />
-  </svg>
+const HouseLogo = ({ className = 'w-6 h-6' }: { className?: string }) => (
+  <span className="inline-flex items-center justify-center w-10 h-10 rounded-md bg-teal-500">
+    <svg className={className} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
+      <path d="M10.707 2.293a1 1 0 0 0-1.414 0L3 8.586V20a2 2 0 0 0 2 2h5v-7h4v7h5a2 2 0 0 0 2-2V8.586l-6.293-6.293a1 1 0 0 0-1.414 0L12 5.586 10.707 2.293z" fill="#ffffff"/>
+    </svg>
+  </span>
 );
 
 const RealEstateAgent = () => {
