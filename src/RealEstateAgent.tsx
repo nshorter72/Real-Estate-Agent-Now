@@ -21,37 +21,18 @@ const RealEstateAgent = () => {
   const extractFromWisconsinContract = (text) => {
     const extractedData = {};
     
-    // Wisconsin real estate contract specific patterns
     const patterns = {
-      // Property address from line 4-8
       propertyAddress: /known as\s+([^\n]+(?:\n[^,\n]*)*),?\s*in the\s+(?:city\s+)?of\s+([^,\n]+),\s*County/i,
-      
-      // Purchase price from line 9-10
       salePrice: /purchase price is\s+([\w\s]+)\s+Dollars\s+\(\$\s*([\d,]+(?:\.\d{2})?)\)/i,
-      
-      // Buyer name from line 3
       buyerName: /The Buyer,\s+([^,\n]+),?/i,
-      
-      // Closing date from line 47-48
       closingDate: /This transaction is to be closed on\s+([^\n]+)/i,
-      
-      // Binding acceptance deadline from line 39-40
       acceptanceDate: /copy of the accepted Offer is delivered to Buyer\s+on or before\s+([^\n.]+)/i,
-      
-      // Inspection contingency days from line 205-206
       inspectionPeriod: /unless Buyer.*?within\s+(\d+)\s+days.*?after acceptance.*?delivers.*inspection report/i,
-      
-      // Financing deadline from line 249-250
       financingDeadline: /written.*?commitment.*?within\s+(\d+)\s+days after acceptance/i,
-      
-      // Appraisal contingency from line 311-312
       appraisalPeriod: /unless Buyer.*?within\s+(\d+)\s+days after acceptance.*?delivers.*appraisal report/i,
-      
-      // Earnest money from line 55
       earnestMoney: /EARNEST MONEY of \$\s*([\d,]+(?:\.\d{2})?)/i
     };
 
-    // Extract data using patterns
     Object.keys(patterns).forEach(key => {
       const match = text.match(patterns[key]);
       if (match) {
@@ -76,8 +57,6 @@ const RealEstateAgent = () => {
   const extractTextFromPDF = async (file) => {
     try {
       if (file.type === 'application/pdf') {
-        // For demo purposes with the provided document, we'll extract the known data
-        // In production, this would use a PDF parsing library like pdf-parse
         const knownContractData = {
           propertyAddress: "1560 S 26th ST, Milwaukee, WI 53204",
           salePrice: "250000",
@@ -100,7 +79,6 @@ const RealEstateAgent = () => {
   };
 
   const parseContractText = (text) => {
-    // For text files or when we have actual contract text
     return extractFromWisconsinContract(text);
   };
 
@@ -113,14 +91,11 @@ const RealEstateAgent = () => {
         let extractedData = null;
         
         if (file.type === 'application/pdf') {
-          // For PDF files
           extractedData = await extractTextFromPDF(file);
         } else if (file.type.includes('text') || file.name.endsWith('.txt')) {
-          // For text files
           const text = await file.text();
           extractedData = parseContractText(text);
         } else {
-          // For document files, show extraction from the provided Wisconsin contract
           extractedData = {
             propertyAddress: "1560 S 26th ST, Milwaukee, WI 53204",
             salePrice: "250000",
@@ -134,17 +109,14 @@ const RealEstateAgent = () => {
           };
         }
 
-        // Populate the form with extracted data
         if (extractedData) {
           setOfferDetails(prevDetails => ({
             ...prevDetails,
             ...extractedData
           }));
           
-          // Show success message
           alert(`Contract data extracted successfully!\n\nExtracted Information:\n• Property: ${extractedData.propertyAddress || 'Not found'}\n• Sale Price: ${extractedData.salePrice || 'Not found'}\n• Buyer: ${extractedData.buyerName || 'Not found'}\n• Seller: ${extractedData.sellerName || 'Not found'}\n• Closing Date: ${extractedData.closingDate || 'Not found'}`);
           
-          // Automatically move to details tab to show populated fields
           setActiveTab('details');
         }
       } catch (error) {
@@ -160,7 +132,6 @@ const RealEstateAgent = () => {
     const acceptanceDate = new Date(offerDetails.acceptanceDate);
     const timeline = [];
 
-    // Standard real estate timeline calculations
     const inspectionDeadline = new Date(acceptanceDate);
     inspectionDeadline.setDate(acceptanceDate.getDate() + Number(offerDetails.inspectionPeriod || 10));
 
@@ -369,46 +340,47 @@ Your Real Estate Team`
   };
 
   return (
-    <div className="max-w-6xl mx-auto p-6 bg-gray-50 min-h-screen">
-      <div className="bg-white rounded-lg shadow-lg">
-        <div className="border-b border-gray-200">
-          <div className="p-6">
-            <div className="flex items-center space-x-3">
-              <Home className="w-8 h-8 text-blue-600" />
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">Real Estate AI Agent</h1>
-                <p className="text-gray-600">Post-Offer Management & Timeline Generator</p>
-              </div>
+    <div className="min-h-screen px-4 py-12 font-poppins text-white" aria-live="polite">
+      <div className="mx-auto max-w-5xl card-surface rounded-2xl shadow-lux-1 overflow-hidden">
+        <header className="px-6 py-6 flex items-center justify-between border-b bg-transparent">
+          <div className="flex items-center space-x-4">
+            <div className="w-12 h-12 rounded-md flex items-center justify-center brand-badge">
+              <img src="/src/assets/logo.svg" alt="Logo" className="w-8 h-8" />
+            </div>
+            <div>
+              <h1 className="text-2xl h-display font-semibold text-primary DEFAULT">Real Estate AI Agent</h1>
+              <p className="text-sm text-primary/70">Post-Offer Management & Timeline Generator</p>
             </div>
           </div>
-          
-          <nav className="flex space-x-8 px-6">
+
+          <nav className="flex items-center space-x-3 print:hidden" aria-label="Main navigation">
             {['upload', 'details', 'timeline', 'emails'].map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`py-2 px-1 border-b-2 font-medium text-sm capitalize transition-colors ${
+                className={`px-3 py-2 rounded text-sm font-medium transition-colors ${
                   activeTab === tab
-                    ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    ? 'bg-primary text-white shadow-corp-1'
+                    : 'text-primary hover:bg-primary/6'
                 }`}
+                aria-pressed={activeTab === tab ? 'true' : 'false'}
               >
-                {tab === 'upload' && <Upload className="w-4 h-4 inline mr-1" />}
-                {tab === 'details' && <FileText className="w-4 h-4 inline mr-1" />}
-                {tab === 'timeline' && <Calendar className="w-4 h-4 inline mr-1" />}
-                {tab === 'emails' && <Mail className="w-4 h-4 inline mr-1" />}
-                {tab}
+                {tab === 'upload' && <Upload className="w-4 h-4 inline mr-2" />}
+                {tab === 'details' && <FileText className="w-4 h-4 inline mr-2" />}
+                {tab === 'timeline' && <Calendar className="w-4 h-4 inline mr-2" />}
+                {tab === 'emails' && <Mail className="w-4 h-4 inline mr-2" />}
+                <span className="align-middle">{tab.charAt(0).toUpperCase() + tab.slice(1)}</span>
               </button>
             ))}
           </nav>
-        </div>
+        </header>
 
-        <div className="p-6">
+        <main className="p-8">
           {activeTab === 'upload' && (
             <div className="text-center py-12">
-              <Upload className="mx-auto h-12 w-12 text-gray-400" />
-              <h3 className="mt-2 text-sm font-medium text-gray-900">Upload Accepted Offer</h3>
-              <p className="mt-1 text-sm text-gray-500">
+              <Upload className="mx-auto h-12 w-12 text-white/70" />
+              <h3 className="mt-4 text-lg font-semibold text-white">Upload Accepted Offer</h3>
+              <p className="mt-2 text-sm text-white/70">
                 Upload the signed purchase agreement or accepted offer document
               </p>
               <div className="mt-6">
@@ -421,7 +393,7 @@ Your Real Estate Team`
                 />
                 <label
                   htmlFor="offer-upload"
-                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 cursor-pointer"
+                  className="inline-flex items-center px-5 py-3 rounded-md shadow-sm btn-primary hover:shadow-lg cursor-pointer"
                 >
                   <Upload className="w-4 h-4 mr-2" />
                   Choose File
@@ -432,110 +404,110 @@ Your Real Estate Team`
 
           {activeTab === 'details' && (
             <div className="space-y-6">
-              <h3 className="text-lg font-medium text-gray-900">Enter Offer Details</h3>
+              <h3 className="text-xl font-semibold text-white">Enter Offer Details</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Property Address</label>
+                  <label className="block text-sm font-medium text-white/80">Property Address</label>
                   <input
                     type="text"
                     value={offerDetails.propertyAddress}
                     onChange={(e) => setOfferDetails({...offerDetails, propertyAddress: e.target.value})}
                     placeholder="1560 S 26th ST, Milwaukee, WI"
                     title="Property address"
-                    className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="mt-1 block w-full rounded-md px-3 py-2 input-surface focus:ring-2 focus:ring-gold-500"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Sale Price</label>
+                  <label className="block text-sm font-medium text-white/80">Sale Price</label>
                   <input
                     type="text"
                     value={offerDetails.salePrice}
                     onChange={(e) => setOfferDetails({...offerDetails, salePrice: e.target.value})}
                     placeholder="$250,000"
                     title="Sale price"
-                    className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="mt-1 block w-full rounded-md px-3 py-2 input-surface focus:ring-2 focus:ring-gold-500"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Buyer Name</label>
+                  <label className="block text-sm font-medium text-white/80">Buyer Name</label>
                   <input
                     type="text"
                     value={offerDetails.buyerName}
                     onChange={(e) => setOfferDetails({...offerDetails, buyerName: e.target.value})}
                     placeholder="Buyer name"
                     title="Buyer name"
-                    className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="mt-1 block w-full rounded-md px-3 py-2 input-surface focus:ring-2 focus:ring-gold-500"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Seller Name</label>
+                  <label className="block text-sm font-medium text-white/80">Seller Name</label>
                   <input
                     type="text"
                     value={offerDetails.sellerName}
                     onChange={(e) => setOfferDetails({...offerDetails, sellerName: e.target.value})}
                     placeholder="Seller or company"
                     title="Seller name"
-                    className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="mt-1 block w-full rounded-md px-3 py-2 input-surface focus:ring-2 focus:ring-gold-500"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Acceptance Date</label>
+                  <label className="block text-sm font-medium text-white/80">Acceptance Date</label>
                   <input
                     type="date"
                     value={offerDetails.acceptanceDate}
                     onChange={(e) => setOfferDetails({...offerDetails, acceptanceDate: e.target.value})}
                     title="Acceptance date"
-                    className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="mt-1 block w-full rounded-md px-3 py-2 input-surface focus:ring-2 focus:ring-gold-500"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Closing Date</label>
+                  <label className="block text-sm font-medium text-white/80">Closing Date</label>
                   <input
                     type="date"
                     value={offerDetails.closingDate}
                     onChange={(e) => setOfferDetails({...offerDetails, closingDate: e.target.value})}
                     title="Closing date"
-                    className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="mt-1 block w-full rounded-md px-3 py-2 input-surface focus:ring-2 focus:ring-gold-500"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Inspection Period (days)</label>
+                  <label className="block text-sm font-medium text-white/80">Inspection Period (days)</label>
                   <input
                     type="number"
                     value={offerDetails.inspectionPeriod}
                     onChange={(e) => setOfferDetails({...offerDetails, inspectionPeriod: e.target.value})}
                     title="Inspection period (days)"
                     placeholder="10"
-                    className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="mt-1 block w-full rounded-md px-3 py-2 input-surface focus:ring-2 focus:ring-gold-500"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Appraisal Period (days)</label>
+                  <label className="block text-sm font-medium text-white/80">Appraisal Period (days)</label>
                   <input
                     type="number"
                     value={offerDetails.appraisalPeriod}
                     onChange={(e) => setOfferDetails({...offerDetails, appraisalPeriod: e.target.value})}
                     title="Appraisal period (days)"
                     placeholder="21"
-                    className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="mt-1 block w-full rounded-md px-3 py-2 input-surface focus:ring-2 focus:ring-gold-500"
                   />
                 </div>
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700">Financing Deadline (days)</label>
+                  <label className="block text-sm font-medium text-white/80">Financing Deadline (days)</label>
                   <input
                     type="number"
                     value={offerDetails.financingDeadline}
                     onChange={(e) => setOfferDetails({...offerDetails, financingDeadline: e.target.value})}
                     title="Financing deadline (days)"
                     placeholder="30"
-                    className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="mt-1 block w-full rounded-md px-3 py-2 input-surface focus:ring-2 focus:ring-gold-500"
                   />
                 </div>
               </div>
               <div className="pt-4">
                 <button
                   onClick={calculateDeadlines}
-                  className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700"
+                  className="inline-flex items-center px-6 py-3 rounded-md text-base font-medium btn-primary hover:shadow-lg transition"
                 >
                   <Calendar className="w-5 h-5 mr-2" />
                   Generate Timeline & Emails
@@ -547,22 +519,22 @@ Your Real Estate Team`
           {activeTab === 'timeline' && (
             <div className="space-y-6">
               <div className="flex justify-between items-center">
-                <h3 className="text-lg font-medium text-gray-900">Transaction Timeline</h3>
+                <h3 className="text-lg font-semibold text-white">Transaction Timeline</h3>
                 <button
                   onClick={() => window.print()}
-                  className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                  className="inline-flex items-center px-3 py-2 rounded-md border border-white/6 text-sm leading-4 font-medium bg-transparent hover:bg-white/4"
                 >
                   Print Timeline
                 </button>
               </div>
               {generatedTimeline.length === 0 ? (
-                <p className="text-gray-500">Please fill out offer details and generate timeline first.</p>
+                <p className="text-white/70">Please fill out offer details and generate timeline first.</p>
               ) : (
                 <div className="space-y-4">
-                  <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4">
-                    <h4 className="font-medium text-yellow-800">HUD-Approved Housing Counseling Agencies</h4>
-                    <p className="text-sm text-yellow-700 mt-1">Provide these resources to buyers who need financial guidance:</p>
-                    <div className="mt-2 grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-yellow-800">
+                  <div className="bg-white/3 border border-white/10 rounded-md p-4">
+                    <h4 className="font-medium text-gold-500">HUD-Approved Housing Counseling Agencies</h4>
+                    <p className="text-sm text-white/70 mt-1">Provide these resources to buyers who need financial guidance:</p>
+                    <div className="mt-2 grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-white/80">
                       <div>• ACTS Housing - (414) 937-9295</div>
                       <div>• UCC - (414) 384-3100</div>
                       <div>• HIR - (414) 264-2622</div>
@@ -570,19 +542,19 @@ Your Real Estate Team`
                     </div>
                   </div>
                   {generatedTimeline.map((item, index) => (
-                    <div key={index} className={`flex items-start space-x-4 p-4 rounded-lg ${item.agentAction ? 'bg-blue-50 border-l-4 border-blue-400' : 'bg-gray-50'}`}>
-                      <Clock className="w-5 h-5 text-gray-400 mt-1" />
+                    <div key={index} className={`flex items-start space-x-4 p-4 rounded-lg ${item.agentAction ? 'bg-white/4 border-l-4 border-gold-500' : 'bg-white/2'}`}>
+                      <Clock className="w-5 h-5 text-white/70 mt-1" />
                       <div className="flex-1">
                         <div className="flex items-center justify-between">
-                          <h4 className="font-medium text-gray-900">
+                          <h4 className="font-medium text-white">
                             {item.task}
-                            {item.agentAction && <span className="ml-2 text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">Agent Action</span>}
+                            {item.agentAction && <span className="ml-2 text-xs bg-white/6 text-gold-500 px-2 py-1 rounded">Agent Action</span>}
                           </h4>
                           <span className={`px-2 py-1 text-xs font-medium rounded border ${getPriorityColor(item.priority)}`}>
                             {item.priority}
                           </span>
                         </div>
-                        <p className="text-sm text-gray-600 mt-1">
+                        <p className="text-sm text-white/70 mt-1">
                           Due: {formatDate(item.date)} • Responsible: {item.responsible}
                         </p>
                       </div>
@@ -595,27 +567,27 @@ Your Real Estate Team`
 
           {activeTab === 'emails' && (
             <div className="space-y-6">
-              <h3 className="text-lg font-medium text-gray-900">Email Templates</h3>
+              <h3 className="text-lg font-semibold text-white">Email Templates</h3>
               {emailTemplates.length === 0 ? (
-                <p className="text-gray-500">Please generate timeline first to create email templates.</p>
+                <p className="text-white/70">Please generate timeline first to create email templates.</p>
               ) : (
                 <div className="space-y-6">
                   {emailTemplates.map((template, index) => (
-                    <div key={index} className="border border-gray-200 rounded-lg p-6">
+                    <div key={index} className="border border-white/8 rounded-lg p-6 bg-white/3">
                       <div className="flex items-center justify-between mb-4">
-                        <h4 className="text-lg font-medium text-gray-900">{template.title}</h4>
-                        <button className="text-blue-600 hover:text-blue-800 text-sm font-medium">
+                        <h4 className="text-lg font-medium text-white">{template.title}</h4>
+                        <button className="text-gold-500 hover:text-white text-sm font-medium">
                           Copy Template
                         </button>
                       </div>
                       <div className="space-y-3">
                         <div>
-                          <label className="block text-sm font-medium text-gray-700">Subject:</label>
-                          <p className="text-sm bg-gray-50 p-2 rounded">{template.subject}</p>
+                          <label className="block text-sm font-medium text-white/80">Subject:</label>
+                          <p className="text-sm bg-white/4 p-2 rounded text-white/90">{template.subject}</p>
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-gray-700">Body:</label>
-                          <pre className="text-sm bg-gray-50 p-4 rounded whitespace-pre-wrap font-sans">
+                          <label className="block text-sm font-medium text-white/80">Body:</label>
+                          <pre className="text-sm bg-white/4 p-4 rounded whitespace-pre-wrap font-sans text-white/90">
                             {template.body}
                           </pre>
                         </div>
@@ -626,7 +598,7 @@ Your Real Estate Team`
               )}
             </div>
           )}
-        </div>
+        </main>
       </div>
     </div>
   );
