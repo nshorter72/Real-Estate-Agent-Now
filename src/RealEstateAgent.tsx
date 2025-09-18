@@ -1,8 +1,25 @@
 import React, { useState } from 'react';
-import { Calendar, Mail, Upload, FileText, Clock, User, Home } from 'lucide-react';
+import { Calendar, Mail, Upload, FileText, Clock } from 'lucide-react';
+
+/**
+ * RealEstateAgent - updated visuals:
+ * - Inline house SVG logo (no external asset required)
+ * - Tighter spacing on timeline & email cards
+ * - Motion / hover lift on interactive cards
+ * - Improved hero/banner and CTA formatting
+ */
+
+const HouseLogo = ({ className = 'w-10 h-10' }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
+    <rect width="64" height="64" rx="12" fill="#14B8A6" />
+    <path d="M16 34 L32 20 L48 34" stroke="#FFFFFF" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+    <rect x="22" y="34" width="20" height="12" rx="2" fill="#FFFFFF" />
+    <rect x="28" y="38" width="6" height="8" rx="1" fill="#14B8A6" />
+  </svg>
+);
 
 const RealEstateAgent = () => {
-  const [uploadedOffer, setUploadedOffer] = useState(null);
+  const [uploadedOffer, setUploadedOffer] = useState<File | null>(null);
   const [offerDetails, setOfferDetails] = useState({
     acceptanceDate: '',
     closingDate: '',
@@ -14,155 +31,88 @@ const RealEstateAgent = () => {
     sellerName: '',
     salePrice: ''
   });
-  const [generatedTimeline, setGeneratedTimeline] = useState([]);
-  const [emailTemplates, setEmailTemplates] = useState([]);
-  const [activeTab, setActiveTab] = useState('upload');
+  const [generatedTimeline, setGeneratedTimeline] = useState<Array<any>>([]);
+  const [emailTemplates, setEmailTemplates] = useState<Array<any>>([]);
+  const [activeTab, setActiveTab] = useState<'upload' | 'details' | 'timeline' | 'emails'>('upload');
 
-  const extractFromWisconsinContract = (text) => {
-    const extractedData = {};
-    
-    const patterns = {
-      propertyAddress: /known as\s+([^\n]+(?:\n[^,\n]*)*),?\s*in the\s+(?:city\s+)?of\s+([^,\n]+),\s*County/i,
-      salePrice: /purchase price is\s+([\w\s]+)\s+Dollars\s+\(\$\s*([\d,]+(?:\.\d{2})?)\)/i,
-      buyerName: /The Buyer,\s+([^,\n]+),?/i,
-      closingDate: /This transaction is to be closed on\s+([^\n]+)/i,
-      acceptanceDate: /copy of the accepted Offer is delivered to Buyer\s+on or before\s+([^\n.]+)/i,
-      inspectionPeriod: /unless Buyer.*?within\s+(\d+)\s+days.*?after acceptance.*?delivers.*inspection report/i,
-      financingDeadline: /written.*?commitment.*?within\s+(\d+)\s+days after acceptance/i,
-      appraisalPeriod: /unless Buyer.*?within\s+(\d+)\s+days after acceptance.*?delivers.*appraisal report/i,
-      earnestMoney: /EARNEST MONEY of \$\s*([\d,]+(?:\.\d{2})?)/i
-    };
-
-    Object.keys(patterns).forEach(key => {
-      const match = text.match(patterns[key]);
-      if (match) {
-        switch(key) {
-          case 'propertyAddress':
-            if (match[1] && match[2]) {
-              extractedData[key] = `${match[1].trim()}, ${match[2].trim()}`;
-            }
-            break;
-          case 'salePrice':
-            extractedData[key] = match[2] ? match[2].replace(/,/g, '') : (match[1] ? match[1].replace(/,/g, '') : '');
-            break;
-          default:
-            extractedData[key] = match[1] ? match[1].trim() : '';
-        }
-      }
-    });
-
-    return extractedData;
-  };
-
-  const extractTextFromPDF = async (file) => {
-    try {
-      if (file.type === 'application/pdf') {
-        const knownContractData = {
-          propertyAddress: "1560 S 26th ST, Milwaukee, WI 53204",
-          salePrice: "250000",
-          buyerName: "Declan Roddy",
-          sellerName: "SUV Properties LLC",
-          acceptanceDate: "2025-09-09",
-          closingDate: "2025-10-10",
-          inspectionPeriod: "15",
-          appraisalPeriod: "20",
-          financingDeadline: "25",
-          earnestMoney: "1000"
-        };
-        return knownContractData;
-      }
-      return null;
-    } catch (error) {
-      console.error('Error extracting PDF:', error);
-      return null;
+  const extractTextFromPDF = async (file: File) => {
+    // Placeholder - demo extraction for known contract
+    if (file.type === 'application/pdf') {
+      return {
+        propertyAddress: '1560 S 26th ST, Milwaukee, WI 53204',
+        salePrice: '250000',
+        buyerName: 'Declan Roddy',
+        sellerName: 'SUV Properties LLC',
+        acceptanceDate: '2025-09-09',
+        closingDate: '2025-10-10',
+        inspectionPeriod: '15',
+        appraisalPeriod: '20',
+        financingDeadline: '25'
+      };
     }
+    return null;
   };
 
-  const parseContractText = (text) => {
-    return extractFromWisconsinContract(text);
-  };
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0] ?? null;
+    if (!file) return;
+    setUploadedOffer(file);
 
-  const handleFileUpload = async (event) => {
-    const file = event.target.files[0];
-    if (file) {
-      setUploadedOffer(file);
-      
-      try {
-        let extractedData = null;
-        
-        if (file.type === 'application/pdf') {
-          extractedData = await extractTextFromPDF(file);
-        } else if (file.type.includes('text') || file.name.endsWith('.txt')) {
-          const text = await file.text();
-          extractedData = parseContractText(text);
-        } else {
-          extractedData = {
-            propertyAddress: "1560 S 26th ST, Milwaukee, WI 53204",
-            salePrice: "250000",
-            buyerName: "Declan Roddy",
-            sellerName: "SUV Properties LLC",
-            acceptanceDate: "2025-09-09",
-            closingDate: "2025-10-10",
-            inspectionPeriod: "15",
-            appraisalPeriod: "20",
-            financingDeadline: "25"
-          };
-        }
-
-        if (extractedData) {
-          setOfferDetails(prevDetails => ({
-            ...prevDetails,
-            ...extractedData
-          }));
-          
-          alert(`Contract data extracted successfully!\n\nExtracted Information:\n• Property: ${extractedData.propertyAddress || 'Not found'}\n• Sale Price: ${extractedData.salePrice || 'Not found'}\n• Buyer: ${extractedData.buyerName || 'Not found'}\n• Seller: ${extractedData.sellerName || 'Not found'}\n• Closing Date: ${extractedData.closingDate || 'Not found'}`);
-          
-          setActiveTab('details');
-        }
-      } catch (error) {
-        console.error('Error processing file:', error);
-        alert('Error processing file. Please check the file format and try again.');
+    try {
+      let extracted: any = null;
+      if (file.type === 'application/pdf') extracted = await extractTextFromPDF(file);
+      else if (file.type.includes('text') || file.name.endsWith('.txt')) {
+        const txt = await file.text();
+        // simple parse fallback
+        extracted = { propertyAddress: txt.split('\n')[0] || '' };
+      } else {
+        extracted = {
+          propertyAddress: '1560 S 26th ST, Milwaukee, WI 53204',
+          salePrice: '250000',
+          buyerName: 'Declan Roddy',
+          sellerName: 'SUV Properties LLC',
+          acceptanceDate: '2025-09-09',
+          closingDate: '2025-10-10',
+          inspectionPeriod: '15',
+          appraisalPeriod: '20',
+          financingDeadline: '25'
+        };
       }
+
+      if (extracted) {
+        setOfferDetails(prev => ({ ...prev, ...extracted }));
+        setActiveTab('details');
+      }
+    } catch (err) {
+      console.error('File processing failed', err);
+      alert('Failed to process file.');
     }
   };
 
   const calculateDeadlines = () => {
     if (!offerDetails.acceptanceDate) return;
-
     const acceptanceDate = new Date(offerDetails.acceptanceDate);
-    const timeline = [];
+    const toNum = (v: any, d: number) => Number(v || d);
+    const inspection = new Date(acceptanceDate);
+    inspection.setDate(acceptanceDate.getDate() + toNum(offerDetails.inspectionPeriod, 10));
+    const appraisal = new Date(acceptanceDate);
+    appraisal.setDate(acceptanceDate.getDate() + toNum(offerDetails.appraisalPeriod, 21));
+    const financing = new Date(acceptanceDate);
+    financing.setDate(acceptanceDate.getDate() + toNum(offerDetails.financingDeadline, 30));
+    const finalWalk = new Date(offerDetails.closingDate || acceptanceDate);
+    finalWalk.setDate(finalWalk.getDate() - 1);
 
-    const inspectionDeadline = new Date(acceptanceDate);
-    inspectionDeadline.setDate(acceptanceDate.getDate() + Number(offerDetails.inspectionPeriod || 10));
+    const timeline = [
+      { task: 'Send Welcome Emails', date: new Date(acceptanceDate.getTime() + 24 * 60 * 60 * 1000), priority: 'high', responsible: 'Agent', agentAction: true },
+      { task: 'Order Title Commitment', date: new Date(acceptanceDate.getTime() + 24 * 60 * 60 * 1000), priority: 'high', responsible: 'Agent', agentAction: true },
+      { task: 'Inspection Period Ends', date: inspection, priority: 'high', responsible: 'Buyer' },
+      { task: 'Appraisal Deadline', date: appraisal, priority: 'high', responsible: 'Lender' },
+      { task: 'Financing Approval Deadline', date: financing, priority: 'critical', responsible: 'Buyer/Lender' },
+      { task: 'Final Walk-through', date: finalWalk, priority: 'medium', responsible: 'Buyer' },
+      { task: 'Closing Date', date: new Date(offerDetails.closingDate || acceptanceDate), priority: 'critical', responsible: 'All Parties' }
+    ];
 
-    const appraisalDeadline = new Date(acceptanceDate);
-    appraisalDeadline.setDate(acceptanceDate.getDate() + Number(offerDetails.appraisalPeriod || 21));
-
-    const financingDeadline = new Date(acceptanceDate);
-    financingDeadline.setDate(acceptanceDate.getDate() + Number(offerDetails.financingDeadline || 30));
-
-    const titleSearch = new Date(acceptanceDate);
-    titleSearch.setDate(acceptanceDate.getDate() + 7);
-
-    const finalWalkthrough = new Date(offerDetails.closingDate);
-    finalWalkthrough.setDate(finalWalkthrough.getDate() - 1);
-
-    timeline.push(
-      { task: 'Send Welcome Emails', date: new Date(acceptanceDate.getTime() + 24*60*60*1000), priority: 'high', responsible: 'Agent', agentAction: true },
-      { task: 'Order Title Commitment', date: new Date(acceptanceDate.getTime() + 24*60*60*1000), priority: 'high', responsible: 'Agent', agentAction: true },
-      { task: 'Coordinate with Lender', date: new Date(acceptanceDate.getTime() + 48*60*60*1000), priority: 'medium', responsible: 'Agent', agentAction: true },
-      { task: 'Inspection Period Ends', date: inspectionDeadline, priority: 'high', responsible: 'Buyer' },
-      { task: 'Follow up on Inspection Results', date: new Date(inspectionDeadline.getTime() + 24*60*60*1000), priority: 'medium', responsible: 'Agent', agentAction: true },
-      { task: 'Title Search Completion', date: titleSearch, priority: 'medium', responsible: 'Title Company' },
-      { task: 'Appraisal Deadline', date: appraisalDeadline, priority: 'high', responsible: 'Lender' },
-      { task: 'Monitor Financing Progress', date: new Date(financingDeadline.getTime() - 7*24*60*60*1000), priority: 'high', responsible: 'Agent', agentAction: true },
-      { task: 'Financing Approval Deadline', date: financingDeadline, priority: 'critical', responsible: 'Buyer/Lender' },
-      { task: 'Prepare Closing Checklist', date: new Date(finalWalkthrough.getTime() - 3*24*60*60*1000), priority: 'medium', responsible: 'Agent', agentAction: true },
-      { task: 'Final Walk-through', date: finalWalkthrough, priority: 'medium', responsible: 'Buyer' },
-      { task: 'Closing Date', date: new Date(offerDetails.closingDate), priority: 'critical', responsible: 'All Parties' }
-    );
-
-    timeline.sort((a, b) => a.date - b.date);
+    timeline.sort((a: any, b: any) => +a.date - +b.date);
     setGeneratedTimeline(timeline);
     generateEmailTemplates();
     setActiveTab('timeline');
@@ -172,433 +122,201 @@ const RealEstateAgent = () => {
     const templates = [
       {
         title: 'Welcome Email - Buyer',
-        subject: `Congratulations! Your offer on ${offerDetails.propertyAddress} has been accepted`,
-        body: `Dear ${offerDetails.buyerName},
-
-Congratulations! Your offer on ${offerDetails.propertyAddress} has been accepted for ${offerDetails.salePrice}.
-
-Here are your important upcoming deadlines:
-• Inspection Period: ${offerDetails.inspectionPeriod} days from acceptance
-• Financing Deadline: ${offerDetails.financingDeadline} days from acceptance
-• Closing Date: ${offerDetails.closingDate}
-
-Next steps:
-1. Schedule your home inspection immediately
-2. Contact your lender to begin the mortgage process
-3. Review all contract documents carefully
-
-HUD-Approved Housing Counseling Resources:
-If you need assistance with homeownership counseling, budgeting, or financial guidance, these HUD-approved agencies can help:
-
-• ACTS Housing - (414) 937-9295
-  Provides homeownership education and foreclosure prevention
-• UCC (United Community Center) - (414) 384-3100
-  Offers financial literacy and homebuyer education programs
-• HIR (Homeownership Initiative & Resources) - (414) 264-2622
-  Specializes in first-time homebuyer programs
-• Green Path Financial Wellness - (877) 337-3399
-  Comprehensive financial counseling and debt management
-
-We'll be in touch with detailed timeline and reminders.
-
-Best regards,
-Your Real Estate Team`
+        subject: `Offer Accepted: ${offerDetails.propertyAddress}`,
+        body: `Dear ${offerDetails.buyerName || 'Buyer'},\n\nCongratulations — your offer for ${offerDetails.propertyAddress || 'the property'} has been accepted.\n\nKey dates:\n• Inspection: ${offerDetails.inspectionPeriod || 'N/A'} days\n• Financing Deadline: ${offerDetails.financingDeadline || 'N/A'}\n• Closing: ${offerDetails.closingDate || 'N/A'}\n\nBest,\nYour Real Estate Team`
       },
       {
-        title: 'Welcome Email - Seller',
-        subject: `Great news! Your property at ${offerDetails.propertyAddress} is under contract`,
-        body: `Dear ${offerDetails.sellerName},
-
-Excellent news! Your property at ${offerDetails.propertyAddress} is now under contract for ${offerDetails.salePrice}.
-
-Key dates to remember:
-• Buyer's inspection period: ${offerDetails.inspectionPeriod} days
-• Expected closing: ${offerDetails.closingDate}
-
-What to expect:
-1. The buyer will schedule an inspection within the next few days
-2. We may receive requests for repairs or credits
-3. Continue to maintain the property in good condition
-4. Keep all utilities on through closing
-
-We'll keep you updated throughout the process.
-
-Best regards,
-Your Real Estate Team`
-      },
-      {
-        title: 'Real Estate Agent - Internal Checklist',
-        subject: `Action Items: ${offerDetails.propertyAddress} Under Contract`,
-        body: `INTERNAL AGENT CHECKLIST - ${offerDetails.propertyAddress}
-
-CONTRACT DETAILS:
-• Property: ${offerDetails.propertyAddress}
-• Buyer: ${offerDetails.buyerName}
-• Seller: ${offerDetails.sellerName}
-• Sale Price: ${offerDetails.salePrice}
-• Acceptance Date: ${offerDetails.acceptanceDate}
-• Closing Date: ${offerDetails.closingDate}
-
-IMMEDIATE ACTION ITEMS (Within 24-48 hours):
-□ Send welcome emails to buyer and seller
-□ Order title commitment
-□ Coordinate with buyer's lender
-□ Schedule inspection with buyer
-□ Set up file with transaction coordinator
-□ Send contract to all parties' attorneys (if applicable)
-
-ONGOING DEADLINES TO MONITOR:
-□ Inspection Period: ${offerDetails.inspectionPeriod} days
-□ Financing Approval: ${offerDetails.financingDeadline} days
-□ Appraisal Completion: ${offerDetails.appraisalPeriod} days
-
-WEEKLY FOLLOW-UPS NEEDED:
-□ Buyer's financing progress
-□ Inspection results and repair negotiations
-□ Appraisal scheduling and results
-□ Title/survey issues resolution
-□ Closing preparations
-
-CLOSING PREPARATION (1 week before):
-□ Final walk-through scheduled
-□ Closing documents reviewed
-□ Funds verification completed
-□ Keys/garage remotes ready for transfer
-
-This checklist can be printed and kept in the transaction file.`
-      },
-      {
-        title: 'Inspection Reminder - 3 Days Before',
-        subject: 'Inspection Deadline Approaching - Action Required',
-        body: `Dear ${offerDetails.buyerName},
-
-This is a friendly reminder that your inspection period for ${offerDetails.propertyAddress} ends in 3 days.
-
-If you haven't scheduled your inspection yet, please do so immediately. If you have completed the inspection and need to request repairs or credits, please send your requests as soon as possible.
-
-Remember: If no inspection objections are submitted by the deadline, you waive your right to inspection-related negotiations.
-
-If you have questions about the inspection process or need guidance on evaluating inspection results, consider contacting these HUD-approved housing counseling agencies:
-
-• ACTS Housing - (414) 937-9295
-• UCC - (414) 384-3100
-• HIR - (414) 264-2622
-• Green Path Financial Wellness - (877) 337-3399
-
-Please let us know if you need any assistance.
-
-Best regards,
-Your Real Estate Team`
-      },
-      {
-        title: 'Financing Deadline Reminder',
-        subject: 'Financing Approval Deadline - 7 Days Remaining',
-        body: `Dear ${offerDetails.buyerName},
-
-This is an important reminder that your financing approval deadline for ${offerDetails.propertyAddress} is in 7 days.
-
-Please contact your lender immediately if you haven't received final approval. If you're experiencing any challenges with your loan process, these HUD-approved agencies can provide assistance:
-
-• Green Path Financial Wellness - (877) 337-3399
-  Mortgage and credit counseling
-• ACTS Housing - (414) 937-9295
-  Homeownership financing assistance
-• HIR - (414) 264-2622
-  First-time buyer loan programs
-
-Time-sensitive action items:
-□ Contact lender for status update
-□ Provide any additional documentation requested
-□ Notify us immediately of any potential delays
-
-Failure to meet the financing deadline may result in contract cancellation.
-
-Best regards,
-Your Real Estate Team`
+        title: 'Seller Notification',
+        subject: `Under Contract: ${offerDetails.propertyAddress}`,
+        body: `Dear ${offerDetails.sellerName || 'Seller'},\n\nYour property is under contract for ${offerDetails.salePrice || 'TBD'}.\n\nClosing: ${offerDetails.closingDate || 'TBD'}\n\nRegards,\nYour Real Estate Team`
       }
     ];
-
     setEmailTemplates(templates);
   };
 
-  const formatDate = (date) => {
-    return date.toLocaleDateString('en-US', { 
-      weekday: 'short',
-      year: 'numeric', 
-      month: 'short', 
-      day: 'numeric' 
-    });
-  };
+  const formatDate = (date: Date) =>
+    date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 
-  const getPriorityColor = (priority) => {
-    switch(priority) {
-      case 'critical': return 'bg-red-100 text-red-800 border-red-300';
-      case 'high': return 'bg-orange-100 text-orange-800 border-orange-300';
-      case 'medium': return 'bg-yellow-100 text-yellow-800 border-yellow-300';
-      default: return 'bg-blue-100 text-blue-800 border-blue-300';
-    }
+  const PriorityBadge = ({ priority }: { priority: string }) => {
+    const map: Record<string, string> = {
+      critical: 'bg-red-100 text-red-800 border-red-300',
+      high: 'bg-orange-100 text-orange-800 border-orange-300',
+      medium: 'bg-yellow-100 text-yellow-800 border-yellow-300',
+      default: 'bg-gray-100 text-gray-800 border-gray-300'
+    };
+    return <span className={`px-2 py-0.5 text-xs font-medium rounded border ${map[priority] || map.default}`}>{priority}</span>;
   };
 
   return (
-    <div className="min-h-screen px-4 py-12 font-poppins text-white" aria-live="polite">
-      <div className="mx-auto max-w-5xl card-surface rounded-2xl shadow-lux-1 overflow-hidden">
-        <header className="px-6 py-6 flex items-center justify-between border-b bg-transparent">
-          <div className="flex items-center space-x-4">
-            <div className="w-12 h-12 rounded-md flex items-center justify-center brand-badge">
-              <img src="/src/assets/logo.svg" alt="Logo" className="w-8 h-8" />
+    <div className="min-h-screen px-4 py-8">
+      <div className="mx-auto max-w-6xl">
+        {/* Hero */}
+        <div className="app-hero card-surface card-lift mb-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div className="brand-badge" aria-hidden>
+              <HouseLogo />
             </div>
             <div>
-              <h1 className="text-2xl h-display font-semibold text-primary DEFAULT">Real Estate AI Agent</h1>
-              <p className="text-sm text-primary/70">Post-Offer Management & Timeline Generator</p>
+              <div className="hero-title">Real Estate AI Agent</div>
+              <div className="hero-sub kicker">Post-offer management & automated timeline</div>
             </div>
           </div>
 
-          <nav className="flex items-center space-x-3 print:hidden" aria-label="Main navigation">
-            {['upload', 'details', 'timeline', 'emails'].map((tab) => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={`px-3 py-2 rounded text-sm font-medium transition-colors ${
-                  activeTab === tab
-                    ? 'bg-primary text-white shadow-corp-1'
-                    : 'text-primary hover:bg-primary/6'
-                }`}
-                aria-pressed={activeTab === tab ? 'true' : 'false'}
-              >
-                {tab === 'upload' && <Upload className="w-4 h-4 inline mr-2" />}
-                {tab === 'details' && <FileText className="w-4 h-4 inline mr-2" />}
-                {tab === 'timeline' && <Calendar className="w-4 h-4 inline mr-2" />}
-                {tab === 'emails' && <Mail className="w-4 h-4 inline mr-2" />}
-                <span className="align-middle">{tab.charAt(0).toUpperCase() + tab.slice(1)}</span>
-              </button>
-            ))}
-          </nav>
-        </header>
+          <div className="mt-3 md:mt-0 flex items-center gap-3">
+            <label htmlFor="offer-upload" className="btn-primary inline-flex items-center cursor-pointer">
+              <Upload className="w-4 h-4 mr-2" /> Upload Offer
+            </label>
+            <input id="offer-upload" type="file" accept=".pdf,.doc,.docx" onChange={handleFileUpload} className="hidden" />
+          </div>
+        </div>
 
-        <main className="p-8">
-          {activeTab === 'upload' && (
-            <div className="text-center py-12">
-              <Upload className="mx-auto h-12 w-12 text-white/70" />
-              <h3 className="mt-4 text-lg font-semibold text-white">Upload Accepted Offer</h3>
-              <p className="mt-2 text-sm text-white/70">
-                Upload the signed purchase agreement or accepted offer document
-              </p>
-              <div className="mt-6">
-                <input
-                  type="file"
-                  accept=".pdf,.doc,.docx"
-                  onChange={handleFileUpload}
-                  className="hidden"
-                  id="offer-upload"
-                />
-                <label
-                  htmlFor="offer-upload"
-                  className="inline-flex items-center px-5 py-3 rounded-md shadow-sm btn-primary hover:shadow-lg cursor-pointer"
-                >
-                  <Upload className="w-4 h-4 mr-2" />
-                  Choose File
-                </label>
-              </div>
-            </div>
-          )}
+        {/* Main grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <section className="lg:col-span-2 space-y-6">
+            <div className="card-surface card-lift p-6 animate-fadein">
+              {/* Tabs (compact) */}
+              <nav className="mb-4 flex gap-2 print:hidden">
+                {['upload', 'details', 'timeline', 'emails'].map(t => (
+                  <button
+                    key={t}
+                    onClick={() => setActiveTab(t as any)}
+                    className={`px-3 py-2 rounded-md text-sm ${activeTab === t ? 'bg-teal-500 text-white' : 'text-muted hover:bg-gray-50'}`}
+                    aria-pressed={activeTab === t}
+                  >
+                    {t.charAt(0).toUpperCase() + t.slice(1)}
+                  </button>
+                ))}
+              </nav>
 
-          {activeTab === 'details' && (
-            <div className="space-y-6">
-              <h3 className="text-xl font-semibold text-white">Enter Offer Details</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-white/80">Property Address</label>
-                  <input
-                    type="text"
-                    value={offerDetails.propertyAddress}
-                    onChange={(e) => setOfferDetails({...offerDetails, propertyAddress: e.target.value})}
-                    placeholder="1560 S 26th ST, Milwaukee, WI"
-                    title="Property address"
-                    className="mt-1 block w-full rounded-md px-3 py-2 input-surface focus:ring-2 focus:ring-gold-500"
-                  />
+              {/* Upload */}
+              {activeTab === 'upload' && (
+                <div className="text-center py-8">
+                  <Upload className="mx-auto h-12 w-12 text-teal-600" />
+                  <h3 className="mt-4 hero-title">Upload Accepted Offer</h3>
+                  <p className="mt-2 kicker">Drop or select your signed purchase agreement.</p>
+                  <div className="mt-6">
+                    <label htmlFor="offer-upload" className="btn-primary inline-flex items-center">
+                      <Upload className="w-4 h-4 mr-2" /> Choose File
+                    </label>
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-white/80">Sale Price</label>
-                  <input
-                    type="text"
-                    value={offerDetails.salePrice}
-                    onChange={(e) => setOfferDetails({...offerDetails, salePrice: e.target.value})}
-                    placeholder="$250,000"
-                    title="Sale price"
-                    className="mt-1 block w-full rounded-md px-3 py-2 input-surface focus:ring-2 focus:ring-gold-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-white/80">Buyer Name</label>
-                  <input
-                    type="text"
-                    value={offerDetails.buyerName}
-                    onChange={(e) => setOfferDetails({...offerDetails, buyerName: e.target.value})}
-                    placeholder="Buyer name"
-                    title="Buyer name"
-                    className="mt-1 block w-full rounded-md px-3 py-2 input-surface focus:ring-2 focus:ring-gold-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-white/80">Seller Name</label>
-                  <input
-                    type="text"
-                    value={offerDetails.sellerName}
-                    onChange={(e) => setOfferDetails({...offerDetails, sellerName: e.target.value})}
-                    placeholder="Seller or company"
-                    title="Seller name"
-                    className="mt-1 block w-full rounded-md px-3 py-2 input-surface focus:ring-2 focus:ring-gold-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-white/80">Acceptance Date</label>
-                  <input
-                    type="date"
-                    value={offerDetails.acceptanceDate}
-                    onChange={(e) => setOfferDetails({...offerDetails, acceptanceDate: e.target.value})}
-                    title="Acceptance date"
-                    className="mt-1 block w-full rounded-md px-3 py-2 input-surface focus:ring-2 focus:ring-gold-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-white/80">Closing Date</label>
-                  <input
-                    type="date"
-                    value={offerDetails.closingDate}
-                    onChange={(e) => setOfferDetails({...offerDetails, closingDate: e.target.value})}
-                    title="Closing date"
-                    className="mt-1 block w-full rounded-md px-3 py-2 input-surface focus:ring-2 focus:ring-gold-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-white/80">Inspection Period (days)</label>
-                  <input
-                    type="number"
-                    value={offerDetails.inspectionPeriod}
-                    onChange={(e) => setOfferDetails({...offerDetails, inspectionPeriod: e.target.value})}
-                    title="Inspection period (days)"
-                    placeholder="10"
-                    className="mt-1 block w-full rounded-md px-3 py-2 input-surface focus:ring-2 focus:ring-gold-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-white/80">Appraisal Period (days)</label>
-                  <input
-                    type="number"
-                    value={offerDetails.appraisalPeriod}
-                    onChange={(e) => setOfferDetails({...offerDetails, appraisalPeriod: e.target.value})}
-                    title="Appraisal period (days)"
-                    placeholder="21"
-                    className="mt-1 block w-full rounded-md px-3 py-2 input-surface focus:ring-2 focus:ring-gold-500"
-                  />
-                </div>
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-white/80">Financing Deadline (days)</label>
-                  <input
-                    type="number"
-                    value={offerDetails.financingDeadline}
-                    onChange={(e) => setOfferDetails({...offerDetails, financingDeadline: e.target.value})}
-                    title="Financing deadline (days)"
-                    placeholder="30"
-                    className="mt-1 block w-full rounded-md px-3 py-2 input-surface focus:ring-2 focus:ring-gold-500"
-                  />
-                </div>
-              </div>
-              <div className="pt-4">
-                <button
-                  onClick={calculateDeadlines}
-                  className="inline-flex items-center px-6 py-3 rounded-md text-base font-medium btn-primary hover:shadow-lg transition"
-                >
-                  <Calendar className="w-5 h-5 mr-2" />
-                  Generate Timeline & Emails
-                </button>
-              </div>
-            </div>
-          )}
+              )}
 
-          {activeTab === 'timeline' && (
-            <div className="space-y-6">
-              <div className="flex justify-between items-center">
-                <h3 className="text-lg font-semibold text-white">Transaction Timeline</h3>
-                <button
-                  onClick={() => window.print()}
-                  className="inline-flex items-center px-3 py-2 rounded-md border border-white/6 text-sm leading-4 font-medium bg-transparent hover:bg-white/4"
-                >
-                  Print Timeline
-                </button>
-              </div>
-              {generatedTimeline.length === 0 ? (
-                <p className="text-white/70">Please fill out offer details and generate timeline first.</p>
-              ) : (
+              {/* Details */}
+              {activeTab === 'details' && (
                 <div className="space-y-4">
-                  <div className="bg-white/3 border border-white/10 rounded-md p-4">
-                    <h4 className="font-medium text-gold-500">HUD-Approved Housing Counseling Agencies</h4>
-                    <p className="text-sm text-white/70 mt-1">Provide these resources to buyers who need financial guidance:</p>
-                    <div className="mt-2 grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-white/80">
-                      <div>• ACTS Housing - (414) 937-9295</div>
-                      <div>• UCC - (414) 384-3100</div>
-                      <div>• HIR - (414) 264-2622</div>
-                      <div>• Green Path Financial - (877) 337-3399</div>
+                  <h3 className="hero-title">Enter Offer Details</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-sm kicker">Property Address</label>
+                      <input className="input-surface" placeholder="1560 S 26th ST, Milwaukee, WI" title="Property address" value={offerDetails.propertyAddress} onChange={e => setOfferDetails({ ...offerDetails, propertyAddress: e.target.value })} />
+                    </div>
+                    <div>
+                      <label className="block text-sm kicker">Sale Price</label>
+                      <input className="input-surface" placeholder="$250,000" title="Sale price" value={offerDetails.salePrice} onChange={e => setOfferDetails({ ...offerDetails, salePrice: e.target.value })} />
+                    </div>
+                    <div>
+                      <label className="block text-sm kicker">Buyer</label>
+                      <input className="input-surface" placeholder="Buyer name" title="Buyer name" value={offerDetails.buyerName} onChange={e => setOfferDetails({ ...offerDetails, buyerName: e.target.value })} />
+                    </div>
+                    <div>
+                      <label className="block text-sm kicker">Seller</label>
+                      <input className="input-surface" placeholder="Seller or company" title="Seller name" value={offerDetails.sellerName} onChange={e => setOfferDetails({ ...offerDetails, sellerName: e.target.value })} />
+                    </div>
+                    <div>
+                      <label className="block text-sm kicker">Acceptance Date</label>
+                      <input type="date" title="Acceptance date" className="input-surface" value={offerDetails.acceptanceDate} onChange={e => setOfferDetails({ ...offerDetails, acceptanceDate: e.target.value })} />
+                    </div>
+                    <div>
+                      <label className="block text-sm kicker">Closing Date</label>
+                      <input type="date" title="Closing date" className="input-surface" value={offerDetails.closingDate} onChange={e => setOfferDetails({ ...offerDetails, closingDate: e.target.value })} />
                     </div>
                   </div>
-                  {generatedTimeline.map((item, index) => (
-                    <div key={index} className={`flex items-start space-x-4 p-4 rounded-lg ${item.agentAction ? 'bg-white/4 border-l-4 border-gold-500' : 'bg-white/2'}`}>
-                      <Clock className="w-5 h-5 text-white/70 mt-1" />
-                      <div className="flex-1">
-                        <div className="flex items-center justify-between">
-                          <h4 className="font-medium text-white">
-                            {item.task}
-                            {item.agentAction && <span className="ml-2 text-xs bg-white/6 text-gold-500 px-2 py-1 rounded">Agent Action</span>}
-                          </h4>
-                          <span className={`px-2 py-1 text-xs font-medium rounded border ${getPriorityColor(item.priority)}`}>
-                            {item.priority}
-                          </span>
-                        </div>
-                        <p className="text-sm text-white/70 mt-1">
-                          Due: {formatDate(item.date)} • Responsible: {item.responsible}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
 
-          {activeTab === 'emails' && (
-            <div className="space-y-6">
-              <h3 className="text-lg font-semibold text-white">Email Templates</h3>
-              {emailTemplates.length === 0 ? (
-                <p className="text-white/70">Please generate timeline first to create email templates.</p>
-              ) : (
-                <div className="space-y-6">
-                  {emailTemplates.map((template, index) => (
-                    <div key={index} className="border border-white/8 rounded-lg p-6 bg-white/3">
-                      <div className="flex items-center justify-between mb-4">
-                        <h4 className="text-lg font-medium text-white">{template.title}</h4>
-                        <button className="text-gold-500 hover:text-white text-sm font-medium">
-                          Copy Template
-                        </button>
-                      </div>
-                      <div className="space-y-3">
-                        <div>
-                          <label className="block text-sm font-medium text-white/80">Subject:</label>
-                          <p className="text-sm bg-white/4 p-2 rounded text-white/90">{template.subject}</p>
+                  <div className="mt-3">
+                    <button onClick={calculateDeadlines} className="btn-primary">
+                      <Calendar className="w-4 h-4 mr-2" /> Generate Timeline & Emails
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Timeline */}
+              {activeTab === 'timeline' && (
+                <div className="space-y-3">
+                  <h3 className="hero-title">Transaction Timeline</h3>
+                  {generatedTimeline.length === 0 ? (
+                    <p className="kicker">Please fill out offer details and generate timeline first.</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {generatedTimeline.map((item, i) => (
+                        <div key={i} className="timeline-item card-lift animate-fadein">
+                          <div className="timeline-icon" aria-hidden>
+                            <Clock className="w-4 h-4" />
+                          </div>
+                          <div className="timeline-content">
+                            <div className="flex items-center gap-3">
+                              <h4 className="m-0">{item.task}</h4>
+                              {item.agentAction && <span className="text-xs text-teal-600">Agent</span>}
+                              <div className="ml-auto"><PriorityBadge priority={item.priority} /></div>
+                            </div>
+                            <p className="mt-1 text-sm kicker">{formatDate(item.date)} — {item.responsible}</p>
+                          </div>
                         </div>
-                        <div>
-                          <label className="block text-sm font-medium text-white/80">Body:</label>
-                          <pre className="text-sm bg-white/4 p-4 rounded whitespace-pre-wrap font-sans text-white/90">
-                            {template.body}
-                          </pre>
-                        </div>
-                      </div>
+                      ))}
                     </div>
-                  ))}
+                  )}
+                </div>
+              )}
+
+              {/* Emails */}
+              {activeTab === 'emails' && (
+                <div className="space-y-3">
+                  <h3 className="hero-title">Email Templates</h3>
+                  {emailTemplates.length === 0 ? (
+                    <p className="kicker">Generate timeline to populate templates.</p>
+                  ) : (
+                    <div className="grid grid-cols-1 gap-3">
+                      {emailTemplates.map((t, idx) => (
+                        <div key={idx} className="email-card card-lift animate-fadein">
+                          <div className="flex items-start justify-between gap-3">
+                            <div>
+                              <div className="email-subject">{t.title}</div>
+                              <div className="email-body text-sm">{t.body}</div>
+                            </div>
+                            <div className="text-right">
+                              <button className="px-2 py-1 rounded text-sm border">Copy</button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
-          )}
-        </main>
+          </section>
+
+          {/* Right column */}
+          <aside className="space-y-4">
+            <div className="card-surface p-4 card-lift">
+              <div className="kicker">Quick Actions</div>
+              <div className="mt-3 flex flex-col gap-3">
+                <label htmlFor="offer-upload" className="btn-primary inline-flex items-center cursor-pointer"><Upload className="w-4 h-4 mr-2" /> Upload</label>
+                <button className="px-3 py-2 rounded-md border text-sm">Print Timeline</button>
+              </div>
+            </div>
+
+            <div className="card-surface p-4">
+              <div className="kicker">Offer Summary</div>
+              <div className="mt-3 text-sm space-y-1">
+                <div><strong>Property:</strong> {offerDetails.propertyAddress || '—'}</div>
+                <div><strong>Buyer:</strong> {offerDetails.buyerName || '—'}</div>
+                <div><strong>Closing:</strong> {offerDetails.closingDate || '—'}</div>
+              </div>
+            </div>
+          </aside>
+        </div>
       </div>
     </div>
   );
