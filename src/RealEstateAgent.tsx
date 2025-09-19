@@ -130,13 +130,149 @@ const RealEstateAgent = () => {
     const templates = [
       {
         title: 'Welcome Email - Buyer',
-        subject: `Offer Accepted: ${offerDetails.propertyAddress}`,
-        body: `Dear ${offerDetails.buyerName || 'Buyer'},\n\nCongratulations — your offer for ${offerDetails.propertyAddress || 'the property'} has been accepted.\n\nKey dates:\n• Inspection: ${offerDetails.inspectionPeriod || 'N/A'} days\n• Financing Deadline: ${offerDetails.financingDeadline || 'N/A'}\n• Closing: ${offerDetails.closingDate || 'N/A'}\n\nBest,\nYour Real Estate Team`
+        subject: `Congratulations! Your offer on ${offerDetails.propertyAddress} has been accepted`,
+        body: `Dear ${offerDetails.buyerName || 'Buyer'},
+
+Congratulations! Your offer on ${offerDetails.propertyAddress || 'the property'} has been accepted${offerDetails.salePrice ? ` for ${offerDetails.salePrice}` : ''}.
+
+Here are your important upcoming deadlines:
+• Inspection Period: ${offerDetails.inspectionPeriod || '10'} days from acceptance
+• Financing Deadline: ${offerDetails.financingDeadline || '30'} days from acceptance
+• Closing Date: ${offerDetails.closingDate || 'TBD'}
+
+Next steps:
+1. Schedule your home inspection immediately
+2. Contact your lender to begin the mortgage process
+3. Review all contract documents carefully
+
+HUD-Approved Housing Counseling Resources:
+If you need assistance with homeownership counseling, budgeting, or financial guidance, these HUD-approved agencies can help:
+
+• ACTS Housing - (414) 937-9295
+  Provides homeownership education and foreclosure prevention
+• UCC (United Community Center) - (414) 384-3100
+  Offers financial literacy and homebuyer education programs
+• HIR (Homeownership Initiative & Resources) - (414) 264-2622
+  Specializes in first-time homebuyer programs
+• Green Path Financial Wellness - (877) 337-3399
+  Comprehensive financial counseling and debt management
+
+We'll be in touch with detailed timeline and reminders.
+
+Best regards,
+Your Real Estate Team`
       },
       {
-        title: 'Seller Notification',
-        subject: `Under Contract: ${offerDetails.propertyAddress}`,
-        body: `Dear ${offerDetails.sellerName || 'Seller'},\n\nYour property is under contract for ${offerDetails.salePrice || 'TBD'}.\n\nClosing: ${offerDetails.closingDate || 'TBD'}\n\nRegards,\nYour Real Estate Team`
+        title: 'Welcome Email - Seller',
+        subject: `Great news! Your property at ${offerDetails.propertyAddress} is under contract`,
+        body: `Dear ${offerDetails.sellerName || 'Seller'},
+
+Excellent news! Your property at ${offerDetails.propertyAddress || 'the property'} is now under contract${offerDetails.salePrice ? ` for ${offerDetails.salePrice}` : ''}.
+
+Key dates to remember:
+• Buyer's inspection period: ${offerDetails.inspectionPeriod || '10'} days
+• Expected closing: ${offerDetails.closingDate || 'TBD'}
+
+What to expect:
+1. The buyer will schedule an inspection within the next few days
+2. We may receive requests for repairs or credits
+3. Continue to maintain the property in good condition
+4. Keep all utilities on through closing
+
+We'll keep you updated throughout the process.
+
+Best regards,
+Your Real Estate Team`
+      },
+      {
+        title: 'Real Estate Agent - Internal Checklist',
+        subject: `Action Items: ${offerDetails.propertyAddress} Under Contract`,
+        body: `INTERNAL AGENT CHECKLIST - ${offerDetails.propertyAddress || 'Property'}
+
+CONTRACT DETAILS:
+• Property: ${offerDetails.propertyAddress || '—'}
+• Buyer: ${offerDetails.buyerName || '—'}
+• Seller: ${offerDetails.sellerName || '—'}
+• Sale Price: ${offerDetails.salePrice || '—'}
+• Acceptance Date: ${offerDetails.acceptanceDate || '—'}
+• Closing Date: ${offerDetails.closingDate || '—'}
+
+IMMEDIATE ACTION ITEMS (Within 24-48 hours):
+□ Send welcome emails to buyer and seller
+□ Order title commitment
+□ Coordinate with buyer's lender
+□ Schedule inspection with buyer
+□ Set up file with transaction coordinator
+□ Send contract to all parties' attorneys (if applicable)
+
+ONGOING DEADLINES TO MONITOR:
+□ Inspection Period: ${offerDetails.inspectionPeriod || '10'} days
+□ Financing Approval: ${offerDetails.financingDeadline || '30'} days
+□ Appraisal Completion: ${offerDetails.appraisalPeriod || '21'} days
+
+WEEKLY FOLLOW-UPS NEEDED:
+□ Buyer's financing progress
+□ Inspection results and repair negotiations
+□ Appraisal scheduling and results
+□ Title/survey issues resolution
+□ Closing preparations
+
+CLOSING PREPARATION (1 week before):
+□ Final walk-through scheduled
+□ Closing documents reviewed
+□ Funds verification completed
+□ Keys/garage remotes ready for transfer
+
+This checklist can be printed and kept in the transaction file.`
+      },
+      {
+        title: 'Inspection Reminder - 3 Days Before',
+        subject: 'Inspection Deadline Approaching - Action Required',
+        body: `Dear ${offerDetails.buyerName || 'Buyer'},
+
+This is a friendly reminder that your inspection period for ${offerDetails.propertyAddress || 'the property'} ends in 3 days.
+
+If you haven't scheduled your inspection yet, please do so immediately. If you have completed the inspection and need to request repairs or credits, please send your requests as soon as possible.
+
+Remember: If no inspection objections are submitted by the deadline, you waive your right to inspection-related negotiations.
+
+If you have questions about the inspection process or need guidance on evaluating inspection results, consider contacting these HUD-approved housing counseling agencies:
+
+• ACTS Housing - (414) 937-9295
+• UCC (United Community Center) - (414) 384-3100
+• HIR (Homeownership Initiative & Resources) - (414) 264-2622
+• Green Path Financial Wellness - (877) 337-3399
+
+Please let us know if you need any assistance.
+
+Best regards,
+Your Real Estate Team`
+      },
+      {
+        title: 'Financing Deadline Reminder',
+        subject: 'Financing Approval Deadline - 7 Days Remaining',
+        body: `Dear ${offerDetails.buyerName || 'Buyer'},
+
+This is an important reminder that your financing approval deadline for ${offerDetails.propertyAddress || 'the property'} is in 7 days.
+
+Please contact your lender immediately if you haven't received final approval. If you're experiencing any challenges with your loan process, these HUD-approved agencies can provide assistance:
+
+• Green Path Financial Wellness - (877) 337-3399
+  Mortgage and credit counseling
+• ACTS Housing - (414) 937-9295
+  Homeownership financing assistance
+• HIR (Homeownership Initiative & Resources) - (414) 264-2622
+  First-time buyer loan programs
+
+Time-sensitive action items:
+□ Contact lender for status update
+□ Provide any additional documentation requested
+□ Notify us immediately of any potential delays
+
+Failure to meet the financing deadline may result in contract cancellation.
+
+Best regards,
+Your Real Estate Team`
       }
     ];
     setEmailTemplates(templates);
@@ -144,6 +280,89 @@ const RealEstateAgent = () => {
 
   const formatDate = (date: Date) =>
     date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+
+  const printTimeline = () => {
+    // Build a standalone HTML page and open via Blob URL (more reliable across browsers)
+    const css = `
+      <style>
+        html,body{font-family:Inter, Arial, sans-serif; color:#111; margin:20px;}
+        h1{font-size:18px;margin:0 0 8px 0}
+        .timeline-item{border:1px solid #ddd;padding:10px;border-radius:6px;margin:8px 0;}
+        .timeline-item strong{display:block;font-size:15px;margin-bottom:4px;}
+        .timeline-meta{color:#444;font-size:13px;margin-top:4px;}
+        .email-card{border:1px solid #ddd;padding:10px;border-radius:6px;margin:8px 0;white-space:pre-wrap;}
+        .email-card h3{margin:0 0 8px 0;font-size:15px;}
+        pre{font-family:inherit;font-size:13px;white-space:pre-wrap;}
+        @media print{ .page-break{page-break-after:always;} }
+      </style>
+    `;
+
+    const timelineHtml = generatedTimeline.map(item => `
+      <div class="timeline-item">
+        <strong>${item.task}</strong>
+        <div class="timeline-meta">${formatDate(item.date)} — ${item.responsible} — ${item.priority}</div>
+      </div>
+    `).join('');
+
+    const emailsHtml = (emailTemplates || []).map(t => `
+      <div class="email-card">
+        <h3>${t.title}</h3>
+        <pre>${t.subject}\n\n${t.body}</pre>
+      </div>
+    `).join('');
+
+    const html = `<!doctype html>
+      <html>
+        <head>
+          <meta charset="utf-8" />
+          <title>Timeline & Email Templates</title>
+          ${css}
+        </head>
+        <body>
+          <h1>Transaction Timeline</h1>
+          ${timelineHtml || '<p>No timeline generated.</p>'}
+          <div class="page-break"></div>
+          <h1>Email Templates</h1>
+          ${emailsHtml || '<p>No email templates generated.</p>'}
+        </body>
+      </html>`;
+
+    try {
+      const blob = new Blob([html], { type: 'text/html' });
+      const blobUrl = URL.createObjectURL(blob);
+      const w = window.open(blobUrl, '_blank', 'noopener,noreferrer');
+      if (!w) {
+        alert('Unable to open print window. Please allow popups for this site.');
+        URL.revokeObjectURL(blobUrl);
+        return;
+      }
+
+      // Try reliable print after load, with fallback timeout
+      const triggerPrint = () => {
+        try {
+          w.focus();
+          // print then revoke
+          setTimeout(() => {
+            try { w.print(); } catch (e) { /* ignore */ }
+            try { URL.revokeObjectURL(blobUrl); } catch (e) { /* ignore */ }
+          }, 300);
+        } catch (e) {
+          try { URL.revokeObjectURL(blobUrl); } catch (err) { /* ignore */ }
+        }
+      };
+
+      // If the new window has a document, attempt to listen for load, else fallback
+      try {
+        w.addEventListener && w.addEventListener('load', triggerPrint);
+      } catch (e) {
+        // ignore - some browsers disallow direct access; fallback to timeout
+      }
+      // Always schedule a fallback print
+      setTimeout(triggerPrint, 700);
+    } catch (err) {
+      alert('Print preview failed. Please try browser Print (Ctrl/Cmd+P) instead.');
+    }
+  };
 
   const PriorityBadge = ({ priority }: { priority: string }) => {
     const map: Record<string, string> = {
@@ -202,10 +421,8 @@ const RealEstateAgent = () => {
                   <Upload className="mx-auto h-12 w-12 text-teal-600" />
                   <h3 className="mt-4 hero-title">Upload Accepted Offer</h3>
                   <p className="mt-2 kicker">Drop or select your signed purchase agreement.</p>
-                  <div className="mt-6">
-                    <label htmlFor="offer-upload" className="btn-primary inline-flex items-center">
-                      <Upload className="w-4 h-4 mr-2" /> Choose File
-                    </label>
+              <div className="mt-6">
+                    <p className="kicker">Use the Upload button in the header to add the accepted offer. The header upload is the single canonical upload action for this app.</p>
                   </div>
                 </div>
               )}
@@ -310,8 +527,7 @@ const RealEstateAgent = () => {
             <div className="card-surface p-4 card-lift">
               <div className="kicker">Quick Actions</div>
                 <div className="mt-3 flex flex-col gap-3">
-                <button onClick={() => document.getElementById('offer-upload')?.click()} className="btn-primary inline-flex items-center cursor-pointer"><Upload className="w-4 h-4 mr-2" /> New Offer</button>
-                <button onClick={() => window.print()} className="px-3 py-2 rounded-md border text-sm">Print Timeline</button>
+                <button onClick={printTimeline} className="px-3 py-2 rounded-md border text-sm">Print Timeline</button>
               </div>
             </div>
 
