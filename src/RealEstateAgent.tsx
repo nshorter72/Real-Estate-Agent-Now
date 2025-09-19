@@ -80,6 +80,7 @@ const RealEstateAgent = () => {
 
       if (extracted) {
         setOfferDetails(prev => ({ ...prev, ...extracted }));
+        alert(`Contract data extracted successfully!\n\nExtracted Information:\n• Property: ${extracted.propertyAddress || 'Not found'}\n• Sale Price: ${extracted.salePrice || 'Not found'}\n• Buyer: ${extracted.buyerName || 'Not found'}\n• Seller: ${extracted.sellerName || 'Not found'}\n• Closing Date: ${extracted.closingDate || 'Not found'}`);
         setActiveTab('details');
       }
     } catch (err) {
@@ -98,15 +99,23 @@ const RealEstateAgent = () => {
     appraisal.setDate(acceptanceDate.getDate() + toNum(offerDetails.appraisalPeriod, 21));
     const financing = new Date(acceptanceDate);
     financing.setDate(acceptanceDate.getDate() + toNum(offerDetails.financingDeadline, 30));
+    const titleSearch = new Date(acceptanceDate);
+    titleSearch.setDate(acceptanceDate.getDate() + 7);
+
     const finalWalk = new Date(offerDetails.closingDate || acceptanceDate);
     finalWalk.setDate(finalWalk.getDate() - 1);
 
     const timeline = [
       { task: 'Send Welcome Emails', date: new Date(acceptanceDate.getTime() + 24 * 60 * 60 * 1000), priority: 'high', responsible: 'Agent', agentAction: true },
       { task: 'Order Title Commitment', date: new Date(acceptanceDate.getTime() + 24 * 60 * 60 * 1000), priority: 'high', responsible: 'Agent', agentAction: true },
+      { task: 'Coordinate with Lender', date: new Date(acceptanceDate.getTime() + 48 * 60 * 60 * 1000), priority: 'medium', responsible: 'Agent', agentAction: true },
       { task: 'Inspection Period Ends', date: inspection, priority: 'high', responsible: 'Buyer' },
+      { task: 'Follow up on Inspection Results', date: new Date(inspection.getTime() + 24 * 60 * 60 * 1000), priority: 'medium', responsible: 'Agent', agentAction: true },
+      { task: 'Title Search Completion', date: titleSearch, priority: 'medium', responsible: 'Title Company' },
       { task: 'Appraisal Deadline', date: appraisal, priority: 'high', responsible: 'Lender' },
+      { task: 'Monitor Financing Progress', date: new Date(financing.getTime() - 7 * 24 * 60 * 60 * 1000), priority: 'high', responsible: 'Agent', agentAction: true },
       { task: 'Financing Approval Deadline', date: financing, priority: 'critical', responsible: 'Buyer/Lender' },
+      { task: 'Prepare Closing Checklist', date: new Date(finalWalk.getTime() - 3 * 24 * 60 * 60 * 1000), priority: 'medium', responsible: 'Agent', agentAction: true },
       { task: 'Final Walk-through', date: finalWalk, priority: 'medium', responsible: 'Buyer' },
       { task: 'Closing Date', date: new Date(offerDetails.closingDate || acceptanceDate), priority: 'critical', responsible: 'All Parties' }
     ];
@@ -300,9 +309,9 @@ const RealEstateAgent = () => {
           <aside className="space-y-4">
             <div className="card-surface p-4 card-lift">
               <div className="kicker">Quick Actions</div>
-              <div className="mt-3 flex flex-col gap-3">
-                <label htmlFor="offer-upload" className="btn-primary inline-flex items-center cursor-pointer"><Upload className="w-4 h-4 mr-2" /> Upload</label>
-                <button className="px-3 py-2 rounded-md border text-sm">Print Timeline</button>
+                <div className="mt-3 flex flex-col gap-3">
+                <button onClick={() => document.getElementById('offer-upload')?.click()} className="btn-primary inline-flex items-center cursor-pointer"><Upload className="w-4 h-4 mr-2" /> New Offer</button>
+                <button onClick={() => window.print()} className="px-3 py-2 rounded-md border text-sm">Print Timeline</button>
               </div>
             </div>
 
