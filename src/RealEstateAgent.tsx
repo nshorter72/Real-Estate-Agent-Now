@@ -1,5 +1,9 @@
 import React, { useState } from 'react';
 import { Calendar, Mail, Upload, FileText, Clock, X } from 'lucide-react';
+import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf';
+// Use CDN worker for the dev/demo environment
+// This points to a stable pdf.js worker; change if you bundle the worker locally.
+(pdfjsLib as any).GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
 
 /**
  * RealEstateAgent - updated visuals:
@@ -35,9 +39,74 @@ const RealEstateAgent = () => {
   const [activeTab, setActiveTab] = useState<'upload' | 'details' | 'timeline' | 'emails'>('upload');
 
   const extractTextFromPDF = async (file: File) => {
-    // Real extraction not implemented in this demo.
-    // Return null to avoid auto-filling placeholder data so users must confirm or edit details manually.
-    return null;
+    try {
+      const arrayBuffer = await file.arrayBuffer();
+      const loadingTask = (pdfjsLib as any).getDocument({ data: arrayBuffer });
+      const pdf = await loadingTask.promise;
+      const maxPages = Math.min(pdf.numPages, 5); // read up to first 5 pages
+      let fullText = '';
+      for (let i = 1; i <= maxPages; i++) {
+        const page = await pdf.getPage(i);
+        const content = await page.getTextContent();
+        const strs = content.items.map((it: any) => it.str);
+        fullText += strs.join(' ') + '\n';
+      }
+
+      // Simple heuristics to extract fields
+      const normalized = fullText.replace(/\s+/g, ' ');
+
+      const findFirst = (regex: RegExp) => {
+        const m = normalized.match(regex);
+        return m ? m[1].trim() : '';
+      };
+
+      const priceMatch = normalized.match(/(?:Sale Price|Purchase Price|Price|for)\s*[:\-]?\s*\$?([\d,]{3,}\d)/i)
+        || normalized.match(/\$\s*([\d,]{3,}\d)/);
+      const salePrice = priceMatch ? priceMatch[1].replace(/,/g, '') : '';
+
+      // Buyer / Seller heuristics
+      const buyer = findFirst(/Buyer[:\s]*([A-Z][A-Za-z0-9 ,.&'-]{2,60})/i) || findFirst(/Purchaser[:\s]*([A-Z][A-Za-z0-9 ,.&'-]{2,60})/i);
+      const seller = findFirst(/Seller[:\s]*([A-Z][A-Za-z0-9 ,.&'-]{2,60})/i) || findFirst(/Vendor[:\s]*([A-Z][A-Za-z0-9 ,.&'-]{2,60})/i);
+
+      // Dates: look for MM/DD/YYYY or YYYY-MM-DD
+      const dateRegex = /(\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4})|(\d{4}[\/\-]\d{1,2}[\/\-]\d{1,2})/g;
+      const dates = [];
+      let d;
+      while ((d = dateRegex.exec(normalized)) !== null && dates.length < 6) {
+        dates.push(d[0]);
+      }
+      // Heuristic: acceptance likely first date, closing likely later date
+      const acceptanceDate = dates[0] || '';
+      const closingDate = dates.length > 1 ? dates[dates.length - 1] : '';
+
+      // Periods: look for "inspection period X days" or "inspection X days"
+      const inspection = findFirst(/inspection (?:period\s*)?[:\s]*([0-9]{1,3})\s*days?/i) || findFirst(/inspection[:\s]*([0-9]{1,3})\s*days?/i);
+      const appraisal = findFirst(/appraisal (?:period\s*)?[:\s]*([0-9]{1,3})\s*days?/i) || findFirst(/appraisal[:\s]*([0-9]{1,3})\s*days?/i);
+      const financing = findFirst(/financing (?:deadline|period)?[:\s]*([0-9]{1,3})\s*days?/i) || findFirst(/loan\s*approval[:\s]*([0-9]{1,3})\s*days?/i);
+
+      const result: any = {
+        propertyAddress: findFirst(/(?:Property Address|Address)[:\s]*([A-Z0-9].{5,120})/i) || '',
+        salePrice: salePrice || '',
+        buyerName: buyer || '',
+        sellerName: seller || '',
+        acceptanceDate: acceptanceDate || '',
+        closingDate: closingDate || '',
+        inspectionPeriod: inspection || '',
+        appraisalPeriod: appraisal || '',
+        financingDeadline: financing || ''
+      };
+
+      // If we didn't find an address, try to extract a line that looks like an address (number + street)
+      if (!result.propertyAddress) {
+        const addrMatch = normalized.match(/\d{1,5}\s+[A-Za-z0-9.\- ]{5,80}\s+(?:St|Street|Ave|Avenue|Blvd|Boulevard|Rd|Road|Ln|Lane|Ct|Court|Dr|Drive)\b/i);
+        if (addrMatch) result.propertyAddress = addrMatch[0].trim();
+      }
+
+      return result;
+    } catch (err) {
+      console.warn('PDF extraction failed', err);
+      return null;
+    }
   };
 
   const clearUpload = () => {
@@ -86,14 +155,17 @@ const RealEstateAgent = () => {
     setGeneratedTimeline([]);
     setEmailTemplates([]);
 
-    try {
+      try {
       let extracted: any = null;
-      if (file.type === 'application/pdf') extracted = await extractTextFromPDF(file);
-      else if (file.type.includes('text') || file.name.endsWith('.txt')) {
+      // Treat files ending in .pdf as PDFs too (some browsers/OS report different mime types)
+      if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
+        extracted = await extractTextFromPDF(file);
+      } else if ((file.type && file.type.includes('text')) || file.name.toLowerCase().endsWith('.txt')) {
         const txt = await file.text();
         // simple parse fallback
         extracted = { propertyAddress: txt.split('\n')[0] || '' };
       } else {
+        // Keep demo fallback for other types in demo mode
         extracted = {
           propertyAddress: '1560 S 26th ST, Milwaukee, WI 53204',
           salePrice: '250000',
