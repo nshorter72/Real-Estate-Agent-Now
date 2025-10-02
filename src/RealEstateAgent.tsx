@@ -105,7 +105,18 @@ const RealEstateAgent = () => {
       }
 
       if (extracted) {
-        setOfferDetails(prev => ({ ...prev, ...extracted }));
+        // Reset all fields first, then apply extracted data
+        setOfferDetails({
+          acceptanceDate: extracted.acceptanceDate || '',
+          closingDate: extracted.closingDate || '',
+          inspectionPeriod: extracted.inspectionPeriod || '',
+          appraisalPeriod: extracted.appraisalPeriod || '',
+          financingDeadline: extracted.financingDeadline || '',
+          propertyAddress: extracted.propertyAddress || '',
+          buyerName: extracted.buyerName || '',
+          sellerName: extracted.sellerName || '',
+          salePrice: extracted.salePrice || ''
+        });
         alert(`Contract data extracted successfully!\n\nExtracted Information:\n• Property: ${extracted.propertyAddress || 'Not found'}\n• Sale Price: ${extracted.salePrice || 'Not found'}\n• Buyer: ${extracted.buyerName || 'Not found'}\n• Seller: ${extracted.sellerName || 'Not found'}\n• Closing Date: ${extracted.closingDate || 'Not found'}`);
         setActiveTab('details');
       }
