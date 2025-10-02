@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Calendar, Mail, Upload, FileText, Clock, User, Home } from 'lucide-react';
+import { Calendar, Mail, Upload, FileText, Clock, User, Home, X } from 'lucide-react';
 
 const RealEstateAgent = () => {
   const [uploadedOffer, setUploadedOffer] = useState(null);
@@ -18,14 +18,50 @@ const RealEstateAgent = () => {
   const [emailTemplates, setEmailTemplates] = useState([]);
   const [activeTab, setActiveTab] = useState('upload');
 
+  const clearUpload = () => {
+    if (!window.confirm('Clear current upload and reset all data? This cannot be undone.')) return;
+    setUploadedOffer(null);
+    setOfferDetails({
+      acceptanceDate: '',
+      closingDate: '',
+      inspectionPeriod: '',
+      appraisalPeriod: '',
+      financingDeadline: '',
+      propertyAddress: '',
+      buyerName: '',
+      sellerName: '',
+      salePrice: ''
+    });
+    setGeneratedTimeline([]);
+    setEmailTemplates([]);
+    setActiveTab('upload');
+
+    const input = document.getElementById('offer-upload') as HTMLInputElement | null;
+    if (input) input.value = '';
+  };
+
   const handleFileUpload = async (event) => {
-    const file = event.target.files[0];
-    if (file) {
-      setUploadedOffer(file);
-      // In a real app, you'd parse the PDF/document here
-      // For demo, we'll show a form to input details
-      setActiveTab('details');
-    }
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Immediately clear previous extracted data so we start fresh for the new file
+    setUploadedOffer(file);
+    setOfferDetails({
+      acceptanceDate: '',
+      closingDate: '',
+      inspectionPeriod: '',
+      appraisalPeriod: '',
+      financingDeadline: '',
+      propertyAddress: '',
+      buyerName: '',
+      sellerName: '',
+      salePrice: ''
+    });
+    setGeneratedTimeline([]);
+    setEmailTemplates([]);
+
+    // In this demo we don't auto-extract from PDF; jump to details so user can enter/confirm.
+    setActiveTab('details');
   };
 
   const calculateDeadlines = () => {
@@ -34,20 +70,21 @@ const RealEstateAgent = () => {
     const acceptanceDate = new Date(offerDetails.acceptanceDate);
     const timeline = [];
 
-    // Standard real estate timeline calculations
+    const toNum = (v, d) => Number(v || d);
+
     const inspectionDeadline = new Date(acceptanceDate);
-    inspectionDeadline.setDate(acceptanceDate.getDate() + parseInt(offerDetails.inspectionPeriod || 10));
+    inspectionDeadline.setDate(acceptanceDate.getDate() + toNum(offerDetails.inspectionPeriod, 10));
 
     const appraisalDeadline = new Date(acceptanceDate);
-    appraisalDeadline.setDate(acceptanceDate.getDate() + parseInt(offerDetails.appraisalPeriod || 21));
+    appraisalDeadline.setDate(acceptanceDate.getDate() + toNum(offerDetails.appraisalPeriod, 21));
 
     const financingDeadline = new Date(acceptanceDate);
-    financingDeadline.setDate(acceptanceDate.getDate() + parseInt(offerDetails.financingDeadline || 30));
+    financingDeadline.setDate(acceptanceDate.getDate() + toNum(offerDetails.financingDeadline, 30));
 
     const titleSearch = new Date(acceptanceDate);
     titleSearch.setDate(acceptanceDate.getDate() + 7);
 
-    const finalWalkthrough = new Date(offerDetails.closingDate);
+    const finalWalkthrough = new Date(offerDetails.closingDate || acceptanceDate);
     finalWalkthrough.setDate(finalWalkthrough.getDate() - 1);
 
     timeline.push(
@@ -62,7 +99,7 @@ const RealEstateAgent = () => {
       { task: 'Financing Approval Deadline', date: financingDeadline, priority: 'critical', responsible: 'Buyer/Lender' },
       { task: 'Prepare Closing Checklist', date: new Date(finalWalkthrough.getTime() - 3*24*60*60*1000), priority: 'medium', responsible: 'Agent', agentAction: true },
       { task: 'Final Walk-through', date: finalWalkthrough, priority: 'medium', responsible: 'Buyer' },
-      { task: 'Closing Date', date: new Date(offerDetails.closingDate), priority: 'critical', responsible: 'All Parties' }
+      { task: 'Closing Date', date: new Date(offerDetails.closingDate || acceptanceDate), priority: 'critical', responsible: 'All Parties' }
     );
 
     timeline.sort((a, b) => a.date - b.date);
@@ -85,25 +122,6 @@ Here are your important upcoming deadlines:
 • Financing Deadline: ${offerDetails.financingDeadline} days from acceptance
 • Closing Date: ${offerDetails.closingDate}
 
-Next steps:
-1. Schedule your home inspection immediately
-2. Contact your lender to begin the mortgage process
-3. Review all contract documents carefully
-
-HUD-Approved Housing Counseling Resources:
-If you need assistance with homeownership counseling, budgeting, or financial guidance, these HUD-approved agencies can help:
-
-• ACTS Housing - (414) 937-9295
-  Provides homeownership education and foreclosure prevention
-• UCC (United Community Center) - (414) 384-3100
-  Offers financial literacy and homebuyer education programs
-• HIR (Homeownership Initiative & Resources) - (414) 264-2622
-  Specializes in first-time homebuyer programs
-• Green Path Financial Wellness - (877) 337-3399
-  Comprehensive financial counseling and debt management
-
-We'll be in touch with detailed timeline and reminders.
-
 Best regards,
 Your Real Estate Team`
       },
@@ -114,123 +132,15 @@ Your Real Estate Team`
 
 Excellent news! Your property at ${offerDetails.propertyAddress} is now under contract for ${offerDetails.salePrice}.
 
-Key dates to remember:
-• Buyer's inspection period: ${offerDetails.inspectionPeriod} days
-• Expected closing: ${offerDetails.closingDate}
-
-What to expect:
-1. The buyer will schedule an inspection within the next few days
-2. We may receive requests for repairs or credits
-3. Continue to maintain the property in good condition
-4. Keep all utilities on through closing
-
-We'll keep you updated throughout the process.
-
-Best regards,
-Your Real Estate Team`
-      },
-      {
-        title: 'Real Estate Agent - Internal Checklist',
-        subject: `Action Items: ${offerDetails.propertyAddress} Under Contract`,
-        body: `INTERNAL AGENT CHECKLIST - ${offerDetails.propertyAddress}
-
-CONTRACT DETAILS:
-• Property: ${offerDetails.propertyAddress}
-• Buyer: ${offerDetails.buyerName}
-• Seller: ${offerDetails.sellerName}
-• Sale Price: ${offerDetails.salePrice}
-• Acceptance Date: ${offerDetails.acceptanceDate}
-• Closing Date: ${offerDetails.closingDate}
-
-IMMEDIATE ACTION ITEMS (Within 24-48 hours):
-□ Send welcome emails to buyer and seller
-□ Order title commitment
-□ Coordinate with buyer's lender
-□ Schedule inspection with buyer
-□ Set up file with transaction coordinator
-□ Send contract to all parties' attorneys (if applicable)
-
-ONGOING DEADLINES TO MONITOR:
-□ Inspection Period: ${offerDetails.inspectionPeriod} days
-□ Financing Approval: ${offerDetails.financingDeadline} days
-□ Appraisal Completion: ${offerDetails.appraisalPeriod} days
-
-WEEKLY FOLLOW-UPS NEEDED:
-□ Buyer's financing progress
-□ Inspection results and repair negotiations
-□ Appraisal scheduling and results
-□ Title/survey issues resolution
-□ Closing preparations
-
-CLOSING PREPARATION (1 week before):
-□ Final walk-through scheduled
-□ Closing documents reviewed
-□ Funds verification completed
-□ Keys/garage remotes ready for transfer
-
-This checklist can be printed and kept in the transaction file.`
-      },
-      {
-        title: 'Inspection Reminder - 3 Days Before',
-        subject: 'Inspection Deadline Approaching - Action Required',
-        body: `Dear ${offerDetails.buyerName},
-
-This is a friendly reminder that your inspection period for ${offerDetails.propertyAddress} ends in 3 days.
-
-If you haven't scheduled your inspection yet, please do so immediately. If you have completed the inspection and need to request repairs or credits, please send your requests as soon as possible.
-
-Remember: If no inspection objections are submitted by the deadline, you waive your right to inspection-related negotiations.
-
-If you have questions about the inspection process or need guidance on evaluating inspection results, consider contacting these HUD-approved housing counseling agencies:
-
-• ACTS Housing - (414) 937-9295
-• UCC (United Community Center) - (414) 384-3100
-• HIR (Homeownership Initiative & Resources) - (414) 264-2622
-• Green Path Financial Wellness - (877) 337-3399
-
-Please let us know if you need any assistance.
-
-Best regards,
-Your Real Estate Team`
-      },
-      {
-        title: 'Financing Deadline Reminder',
-        subject: 'Financing Approval Deadline - 7 Days Remaining',
-        body: `Dear ${offerDetails.buyerName},
-
-This is an important reminder that your financing approval deadline for ${offerDetails.propertyAddress} is in 7 days.
-
-Please contact your lender immediately if you haven't received final approval. If you're experiencing any challenges with your loan process, these HUD-approved agencies can provide assistance:
-
-• Green Path Financial Wellness - (877) 337-3399
-  Mortgage and credit counseling
-• ACTS Housing - (414) 937-9295
-  Homeownership financing assistance
-• HIR (Homeownership Initiative & Resources) - (414) 264-2622
-  First-time buyer loan programs
-
-Time-sensitive action items:
-□ Contact lender for status update
-□ Provide any additional documentation requested
-□ Notify us immediately of any potential delays
-
-Failure to meet the financing deadline may result in contract cancellation.
-
 Best regards,
 Your Real Estate Team`
       }
     ];
-
     setEmailTemplates(templates);
   };
 
   const formatDate = (date) => {
-    return date.toLocaleDateString('en-US', { 
-      weekday: 'short',
-      year: 'numeric', 
-      month: 'short', 
-      day: 'numeric' 
-    });
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   };
 
   const getPriorityColor = (priority) => {
@@ -246,7 +156,7 @@ Your Real Estate Team`
     <div className="max-w-6xl mx-auto p-6 bg-gray-50 min-h-screen">
       <div className="bg-white rounded-lg shadow-lg">
         <div className="border-b border-gray-200">
-          <div className="p-6">
+          <div className="p-6 flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <Home className="w-8 h-8 text-blue-600" />
               <div>
@@ -254,9 +164,42 @@ Your Real Estate Team`
                 <p className="text-gray-600">Post-Offer Management & Timeline Generator</p>
               </div>
             </div>
+
+            <div className="flex items-center space-x-3">
+              <div>
+                <input
+                  type="file"
+                  accept=".pdf,.doc,.docx"
+                  onChange={handleFileUpload}
+                  className="hidden"
+                  id="offer-upload"
+                />
+                <label
+                  htmlFor="offer-upload"
+                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 cursor-pointer"
+                >
+                  <Upload className="w-4 h-4 mr-2" />
+                  Choose File
+                </label>
+              </div>
+
+              {uploadedOffer && (
+                <>
+                  <div className="text-sm text-gray-700 mr-2">{uploadedOffer.name}</div>
+                  <button
+                    onClick={clearUpload}
+                    className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-red-700 bg-red-50 hover:bg-red-100"
+                    title="Clear current upload"
+                  >
+                    <X className="w-4 h-4 mr-2" />
+                    Clear
+                  </button>
+                </>
+              )}
+            </div>
           </div>
-          
-          <nav className="flex space-x-8 px-6">
+
+          <nav className="flex space-x-8 px-6 pb-4">
             {['upload', 'details', 'timeline', 'emails'].map((tab) => (
               <button
                 key={tab}
@@ -285,22 +228,6 @@ Your Real Estate Team`
               <p className="mt-1 text-sm text-gray-500">
                 Upload the signed purchase agreement or accepted offer document
               </p>
-              <div className="mt-6">
-                <input
-                  type="file"
-                  accept=".pdf,.doc,.docx"
-                  onChange={handleFileUpload}
-                  className="hidden"
-                  id="offer-upload"
-                />
-                <label
-                  htmlFor="offer-upload"
-                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 cursor-pointer"
-                >
-                  <Upload className="w-4 h-4 mr-2" />
-                  Choose File
-                </label>
-              </div>
             </div>
           )}
 

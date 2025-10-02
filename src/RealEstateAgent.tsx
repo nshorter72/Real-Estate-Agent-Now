@@ -35,20 +35,8 @@ const RealEstateAgent = () => {
   const [activeTab, setActiveTab] = useState<'upload' | 'details' | 'timeline' | 'emails'>('upload');
 
   const extractTextFromPDF = async (file: File) => {
-    // Placeholder - demo extraction for known contract
-    if (file.type === 'application/pdf') {
-      return {
-        propertyAddress: '1560 S 26th ST, Milwaukee, WI 53204',
-        salePrice: '250000',
-        buyerName: 'Declan Roddy',
-        sellerName: 'SUV Properties LLC',
-        acceptanceDate: '2025-09-09',
-        closingDate: '2025-10-10',
-        inspectionPeriod: '15',
-        appraisalPeriod: '20',
-        financingDeadline: '25'
-      };
-    }
+    // Real extraction not implemented in this demo.
+    // Return null to avoid auto-filling placeholder data so users must confirm or edit details manually.
     return null;
   };
 
@@ -81,7 +69,22 @@ const RealEstateAgent = () => {
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0] ?? null;
     if (!file) return;
+
+    // Clear previous extracted data immediately so new upload starts from a clean state
     setUploadedOffer(file);
+    setOfferDetails({
+      acceptanceDate: '',
+      closingDate: '',
+      inspectionPeriod: '',
+      appraisalPeriod: '',
+      financingDeadline: '',
+      propertyAddress: '',
+      buyerName: '',
+      sellerName: '',
+      salePrice: ''
+    });
+    setGeneratedTimeline([]);
+    setEmailTemplates([]);
 
     try {
       let extracted: any = null;
