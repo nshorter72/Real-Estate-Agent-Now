@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Calendar, Mail, Upload, FileText, Clock } from 'lucide-react';
+import { Calendar, Mail, Upload, FileText, Clock, X } from 'lucide-react';
 
 /**
  * RealEstateAgent - updated visuals:
@@ -50,6 +50,32 @@ const RealEstateAgent = () => {
       };
     }
     return null;
+  };
+
+  const clearUpload = () => {
+    if (window.confirm('Are you sure you want to clear the current upload? This will reset all data and cannot be undone.')) {
+      setUploadedOffer(null);
+      setOfferDetails({
+        acceptanceDate: '',
+        closingDate: '',
+        inspectionPeriod: '',
+        appraisalPeriod: '',
+        financingDeadline: '',
+        propertyAddress: '',
+        buyerName: '',
+        sellerName: '',
+        salePrice: ''
+      });
+      setGeneratedTimeline([]);
+      setEmailTemplates([]);
+      setActiveTab('upload');
+      
+      // Reset the file input
+      const fileInput = document.getElementById('offer-upload') as HTMLInputElement;
+      if (fileInput) {
+        fileInput.value = '';
+      }
+    }
   };
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -394,6 +420,15 @@ Your Real Estate Team`
               <Upload className="w-4 h-4 mr-2" /> Upload Offer
             </label>
             <input id="offer-upload" type="file" accept=".pdf,.doc,.docx" onChange={handleFileUpload} className="hidden" />
+            {uploadedOffer && (
+              <button 
+                onClick={clearUpload}
+                className="inline-flex items-center px-3 py-2 text-sm font-medium text-red-700 bg-red-50 border border-red-200 rounded-md hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                title="Clear current upload and reset all data"
+              >
+                <X className="w-4 h-4 mr-2" /> Clear Upload
+              </button>
+            )}
           </div>
         </div>
 
@@ -534,6 +569,9 @@ Your Real Estate Team`
             <div className="card-surface p-4">
               <div className="kicker">Offer Summary</div>
               <div className="mt-3 text-sm space-y-1">
+                {uploadedOffer && (
+                  <div><strong>Uploaded File:</strong> {uploadedOffer.name}</div>
+                )}
                 <div><strong>Property:</strong> {offerDetails.propertyAddress || '—'}</div>
                 <div><strong>Buyer:</strong> {offerDetails.buyerName || '—'}</div>
                 <div><strong>Closing:</strong> {offerDetails.closingDate || '—'}</div>
